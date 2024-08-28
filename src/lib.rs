@@ -78,6 +78,84 @@ impl<T: fmt::UpperHex, U, V> fmt::UpperHex for ArbitraryWrapping<T, U, V> {
     }
 }
 
+#[allow(dead_code)]
+fn wrap<T, U, V>(input: T, max: U, min: V) -> T
+where
+    T: std::cmp::PartialOrd<T>,
+    T: std::cmp::PartialOrd<U>,
+    T: std::cmp::PartialOrd<V>,
+    T: std::ops::Sub<T>,
+    T: std::ops::Sub<U>,
+    T: std::ops::Sub<V>,
+    T: std::ops::Add<T>,
+    T: std::ops::Add<U>,
+    T: std::ops::Add<V>,
+    T: std::ops::Mul<T>,
+    T: std::ops::Mul<U>,
+    T: std::ops::Mul<V>,
+    T: std::ops::Div<T>,
+    T: std::ops::Div<U>,
+    T: std::ops::Div<V>,
+    T: std::ops::Rem<T>,
+    T: std::ops::Rem<U>,
+    T: std::ops::Rem<V>,
+    T: std::ops::AddAssign<T>,
+    T: From<i32>,
+    T: From<U>,
+    T: From<V>,
+    T: std::marker::Copy,
+    U: std::cmp::PartialOrd<T>,
+    U: std::cmp::PartialOrd<V>,
+    U: std::ops::Sub<T>,
+    U: std::ops::Sub<V>,
+    U: std::ops::Add<T>,
+    U: std::ops::Add<V>,
+    U: std::ops::Mul<T>,
+    U: std::ops::Mul<V>,
+    U: std::ops::Div<T>,
+    U: std::ops::Div<V>,
+    U: std::ops::Rem<T>,
+    U: std::ops::Rem<V>,
+    U: From<i32>,
+    U: std::marker::Copy,
+    V: std::cmp::PartialOrd<T>,
+    V: std::cmp::PartialOrd<U>,
+    V: std::ops::Sub<T>,
+    V: std::ops::Sub<U>,
+    V: std::ops::Add<T>,
+    V: std::ops::Add<U>,
+    V: std::ops::Mul<T>,
+    V: std::ops::Mul<U>,
+    V: std::ops::Div<T>,
+    V: std::ops::Div<U>,
+    V: std::ops::Rem<T>,
+    V: std::ops::Rem<U>,
+    V: From<i32>,
+    V: std::marker::Copy,
+    T: std::ops::Sub<V, Output = T>,
+    T: std::ops::Sub<U, Output = T>,
+    T: std::ops::Add<T, Output = T>,
+    T: std::ops::Add<i32, Output = T>,
+    T: std::ops::Mul<T, Output = T>,
+    T: std::convert::From<<T as std::ops::Rem>::Output>,
+    T: std::convert::From<<U as std::ops::Sub<V>>::Output>,
+    T: std::convert::From<<T as std::ops::Div>::Output>,
+    T: std::ops::Add<U, Output = T>,
+    U: std::ops::Sub<T, Output = T>,
+    U: std::ops::Sub<U, Output = T>,
+    U: std::ops::Add<i32, Output = T>,
+    V: std::ops::Sub<T, Output = T>,
+    V: std::ops::Sub<V, Output = T>,
+    V: std::ops::Add<i32, Output = T>,
+{
+    let mut temp = input;
+    let range_size: T = Into::<T>::into(max - min) + 1;
+    if input < min {
+        temp += range_size * Into::<T>::into(Into::<T>::into((min - input) / range_size) + 1);
+    }
+    Into::<T>::into(min) + Into::<T>::into((input - min) % range_size)
+}
+
 // FIXME(30524): impl Op<T> for Wrapping<T>, impl OpAssign<T> for Wrapping<T>
 #[macro_export]
 macro_rules! wrapping_impl {
@@ -87,7 +165,7 @@ macro_rules! wrapping_impl {
 
             #[inline]
             fn add(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
-                ArbitraryWrapping(self.0.wrapping_add(other.0))
+                ArbitraryWrapping(wrap(self.0 + other.0, self.1, self.2), self.1, self.2)
             }
         }
         forward_ref_binop! { impl Add, add for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
@@ -104,7 +182,7 @@ macro_rules! wrapping_impl {
         impl AddAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
             #[inline]
             fn add_assign(&mut self, other: $t) {
-                *self = *self + ArbitraryWrapping(other);
+                *self = *self + ArbitraryWrapping(other, self.1, self.2);
             }
         }
         forward_ref_op_assign! { impl AddAssign, add_assign for ArbitraryWrapping<$t, $u, $v>, $t }
@@ -114,7 +192,7 @@ macro_rules! wrapping_impl {
 
             #[inline]
             fn sub(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
-                ArbitraryWrapping(self.0.wrapping_sub(other.0))
+                ArbitraryWrapping(wrap(self.0 - other.0, self.1, self.2), self.1, self.2)
             }
         }
         forward_ref_binop! { impl Sub, sub for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
@@ -131,7 +209,7 @@ macro_rules! wrapping_impl {
         impl SubAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
             #[inline]
             fn sub_assign(&mut self, other: $t) {
-                *self = *self - ArbitraryWrapping(other);
+                *self = *self - ArbitraryWrapping(other, self.1, self.2);
             }
         }
         forward_ref_op_assign! { impl SubAssign, sub_assign for ArbitraryWrapping<$t, $u, $v>, $t }
@@ -141,7 +219,7 @@ macro_rules! wrapping_impl {
 
             #[inline]
             fn mul(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
-                ArbitraryWrapping(self.0.wrapping_mul(other.0))
+                ArbitraryWrapping(wrap(self.0 * other.0, self.1, self.2), self.1, self.2)
             }
         }
         forward_ref_binop! { impl Mul, mul for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
@@ -168,7 +246,7 @@ macro_rules! wrapping_impl {
 
             #[inline]
             fn div(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
-                ArbitraryWrapping(self.0.wrapping_div(other.0))
+                ArbitraryWrapping(wrap(self.0 / other.0, self.1, self.2), self.1, self.2)
             }
         }
         forward_ref_binop! { impl Div, div for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
@@ -195,11 +273,10 @@ macro_rules! wrapping_impl {
 
             #[inline]
             fn rem(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
-                ArbitraryWrapping(self.0.wrapping_rem(other.0))
+                ArbitraryWrapping(wrap(self.0 % other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl Rem, rem for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
-                #[stable(feature = "wrapping_ref", since = "1.14.0")] }
+        forward_ref_binop! { impl Rem, rem for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
 
         impl RemAssign for ArbitraryWrapping<$t, $u, $v> {
             #[inline]
@@ -207,7 +284,7 @@ macro_rules! wrapping_impl {
                 *self = *self % other;
             }
         }
-        forward_ref_op_assign! { impl RemAssign, rem_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
+        forward_ref_op_assign! { impl RemAssign, rem_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
 
         impl RemAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
             #[inline]
@@ -222,22 +299,20 @@ macro_rules! wrapping_impl {
 
             #[inline]
             fn not(self) -> ArbitraryWrapping<$t, $u, $v> {
-                ArbitraryWrapping(!self.0)
+                ArbitraryWrapping(!self.0, self.1, self.2)
             }
         }
-        forward_ref_unop! { impl Not, not for ArbitraryWrapping<$t, $u, $v>,
-                #[stable(feature = "wrapping_ref", since = "1.14.0")] }
+        forward_ref_unop! { impl Not, not for ArbitraryWrapping<$t, $u, $v>, }
 
         impl BitXor for ArbitraryWrapping<$t, $u, $v> {
             type Output = ArbitraryWrapping<$t, $u, $v>;
 
             #[inline]
             fn bitxor(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
-                ArbitraryWrapping(self.0 ^ other.0)
+                ArbitraryWrapping(wrap(self.0 ^ other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl BitXor, bitxor for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
-                #[stable(feature = "wrapping_ref", since = "1.14.0")] }
+        forward_ref_binop! { impl BitXor, bitxor for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
 
         impl BitXorAssign for ArbitraryWrapping<$t, $u, $v> {
             #[inline]
@@ -245,7 +320,7 @@ macro_rules! wrapping_impl {
                 *self = *self ^ other;
             }
         }
-        forward_ref_op_assign! { impl BitXorAssign, bitxor_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
+        forward_ref_op_assign! { impl BitXorAssign, bitxor_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
 
         impl BitXorAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
             #[inline]
@@ -260,11 +335,10 @@ macro_rules! wrapping_impl {
 
             #[inline]
             fn bitor(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
-                ArbitraryWrapping(self.0 | other.0)
+                ArbitraryWrapping(wrap(self.0 | other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl BitOr, bitor for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
-                #[stable(feature = "wrapping_ref", since = "1.14.0")] }
+        forward_ref_binop! { impl BitOr, bitor for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
 
         impl BitOrAssign for ArbitraryWrapping<$t, $u, $v> {
             #[inline]
@@ -287,11 +361,10 @@ macro_rules! wrapping_impl {
 
             #[inline]
             fn bitand(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
-                ArbitraryWrapping(self.0 & other.0)
+                ArbitraryWrapping(wrap(self.0 & other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl BitAnd, bitand for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
-                #[stable(feature = "wrapping_ref", since = "1.14.0")] }
+        forward_ref_binop! { impl BitAnd, bitand for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
 
         impl BitAndAssign for ArbitraryWrapping<$t, $u, $v> {
             #[inline]
@@ -299,7 +372,7 @@ macro_rules! wrapping_impl {
                 *self = *self & other;
             }
         }
-        forward_ref_op_assign! { impl BitAndAssign, bitand_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
+        forward_ref_op_assign! { impl BitAndAssign, bitand_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
 
         impl BitAndAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
             #[inline]
@@ -312,131 +385,127 @@ macro_rules! wrapping_impl {
         impl Neg for ArbitraryWrapping<$t, $u, $v> {
             type Output = Self;
             #[inline]
+            //TODO: panic if negation would be less than lower bound
             fn neg(self) -> Self {
                 ArbitraryWrapping(0) - self
             }
         }
-        forward_ref_unop! { impl Neg, neg for ArbitraryWrapping<$t, $u, $v>,
-                #[stable(feature = "wrapping_ref", since = "1.14.0")] }
+        forward_ref_unop! { impl Neg, neg for ArbitraryWrapping<$t, $u, $v>}
 
     }
 }
 
 //wrapping_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 }
 
-//macro_rules! wrapping_int_impl {
-//    ($($t:ty)*) => ($(
-//        impl ArbitraryWrapping<$t, $u, $v> {
-//            /// Returns the smallest value that can be represented by this integer type.
-//            ///
-//            /// # Examples
-//            ///
-//            /// Basic usage:
-//            ///
-//            /// ```
-//            /// #![feature(wrapping_int_impl)]
-//            /// use std::num::ArbitraryWrapping;
-//            ///
-//            #[doc = concat!("assert_eq!(<ArbitraryWrapping<", stringify!($t), ">>::MIN, ArbitraryWrapping(", stringify!($t), "::MIN));")]
-//            /// ```
-//            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-//            pub const MIN: Self = Self(<$t>::MIN);
-//
-//            /// Returns the largest value that can be represented by this integer type.
-//            ///
-//            /// # Examples
-//            ///
-//            /// Basic usage:
-//            ///
-//            /// ```
-//            /// #![feature(wrapping_int_impl)]
-//            /// use std::num::ArbitraryWrapping;
-//            ///
-//            #[doc = concat!("assert_eq!(<ArbitraryWrapping<", stringify!($t), ">>::MAX, ArbitraryWrapping(", stringify!($t), "::MAX));")]
-//            /// ```
-//            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-//            pub const MAX: Self = Self(<$t>::MAX);
-//
-//            /// Returns the size of this integer type in bits.
-//            ///
-//            /// # Examples
-//            ///
-//            /// Basic usage:
-//            ///
-//            /// ```
-//            /// #![feature(wrapping_int_impl)]
-//            /// use std::num::ArbitraryWrapping;
-//            ///
-//            #[doc = concat!("assert_eq!(<ArbitraryWrapping<", stringify!($t), ">>::BITS, ", stringify!($t), "::BITS);")]
-//            /// ```
-//            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-//            pub const BITS: u32 = <$t>::BITS;
-//
-//            /// Returns the number of ones in the binary representation of `self`.
-//            ///
-//            /// # Examples
-//            ///
-//            /// Basic usage:
-//            ///
-//            /// ```
-//            /// #![feature(wrapping_int_impl)]
-//            /// use std::num::ArbitraryWrapping;
-//            ///
-//            #[doc = concat!("let n = ArbitraryWrapping(0b01001100", stringify!($t), ");")]
-//            ///
-//            /// assert_eq!(n.count_ones(), 3);
-//            /// ```
-//            #[inline]
-//            #[doc(alias = "popcount")]
-//            #[doc(alias = "popcnt")]
-//            #[must_use = "this returns the result of the operation, \
-//                          without modifying the original"]
-//            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-//            pub const fn count_ones(self) -> u32 {
-//                self.0.count_ones()
-//            }
-//
-//            /// Returns the number of zeros in the binary representation of `self`.
-//            ///
-//            /// # Examples
-//            ///
-//            /// Basic usage:
-//            ///
-//            /// ```
-//            /// #![feature(wrapping_int_impl)]
-//            /// use std::num::ArbitraryWrapping;
-//            ///
-//            #[doc = concat!("assert_eq!(ArbitraryWrapping(!0", stringify!($t), ").count_zeros(), 0);")]
-//            /// ```
-//            #[inline]
-//            #[must_use = "this returns the result of the operation, \
-//                          without modifying the original"]
-//            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-//            pub const fn count_zeros(self) -> u32 {
-//                self.0.count_zeros()
-//            }
-//
-//            /// Returns the number of trailing zeros in the binary representation of `self`.
-//            ///
-//            /// # Examples
-//            ///
-//            /// Basic usage:
-//            ///
-//            /// ```
-//            /// #![feature(wrapping_int_impl)]
-//            /// use std::num::ArbitraryWrapping;
-//            ///
-//            #[doc = concat!("let n = ArbitraryWrapping(0b0101000", stringify!($t), ");")]
-//            ///
-//            /// assert_eq!(n.trailing_zeros(), 3);
-//            /// ```
-//            #[inline]
-//            #[must_use = "this returns the result of the operation, \
-//                          without modifying the original"]
-//            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-//            pub const fn trailing_zeros(self) -> u32 {
-//                self.0.trailing_zeros()
-//            }
+#[allow(dead_code, unused_macros)]
+macro_rules! wrapping_int_impl {
+    ($t:ident, $u:ident, $v:ident, $f:ident) => {
+        impl ArbitraryWrapping<$t, $u, $v> {
+            /// Returns the smallest value that can be represented by this integer type.
+            ///
+            /// # Examples
+            ///
+            /// Basic usage:
+            ///
+            /// ```
+            /// #![feature(wrapping_int_impl)]
+            /// use std::num::ArbitraryWrapping;
+            ///
+            #[doc = concat!("assert_eq!(<ArbitraryWrapping<", stringify!($t), ">>::MIN, ArbitraryWrapping(", stringify!($t), "::MIN));")]
+            /// ```
+            pub const MIN: $u = self.1;
+
+            /// Returns the largest value that can be represented by this integer type.
+            ///
+            /// # Examples
+            ///
+            /// Basic usage:
+            ///
+            /// ```
+            /// #![feature(wrapping_int_impl)]
+            /// use std::num::ArbitraryWrapping;
+            ///
+            #[doc = concat!("assert_eq!(<ArbitraryWrapping<", stringify!($t), ">>::MAX, ArbitraryWrapping(", stringify!($t), "::MAX));")]
+            /// ```
+            pub const MAX: $v = self.2;
+
+            /// Returns the size of this integer type in bits.
+            ///
+            /// # Examples
+            ///
+            /// Basic usage:
+            ///
+            /// ```
+            /// #![feature(wrapping_int_impl)]
+            /// use std::num::ArbitraryWrapping;
+            ///
+            #[doc = concat!("assert_eq!(<ArbitraryWrapping<", stringify!($t), ">>::BITS, ", stringify!($t), "::BITS);")]
+            /// ```
+            pub const BITS: u32 = <$t>::BITS;
+
+            /// Returns the number of ones in the binary representation of `self`.
+            ///
+            /// # Examples
+            ///
+            /// Basic usage:
+            ///
+            /// ```
+            /// #![feature(wrapping_int_impl)]
+            /// use std::num::ArbitraryWrapping;
+            ///
+            #[doc = concat!("let n = ArbitraryWrapping(0b01001100", stringify!($t), ");")]
+            ///
+            /// assert_eq!(n.count_ones(), 3);
+            /// ```
+            #[inline]
+            #[doc(alias = "popcount")]
+            #[doc(alias = "popcnt")]
+            #[must_use = "this returns the result of the operation, \
+                          without modifying the original"]
+            pub const fn count_ones(self) -> u32 {
+                self.0.count_ones()
+            }
+
+            /// Returns the number of zeros in the binary representation of `self`.
+            ///
+            /// # Examples
+            ///
+            /// Basic usage:
+            ///
+            /// ```
+            /// #![feature(wrapping_int_impl)]
+            /// use std::num::ArbitraryWrapping;
+            ///
+            #[doc = concat!("assert_eq!(ArbitraryWrapping(!0", stringify!($t), ").count_zeros(), 0);")]
+            /// ```
+            #[inline]
+            #[must_use = "this returns the result of the operation, \
+                          without modifying the original"]
+            pub const fn count_zeros(self) -> u32 {
+                self.0.count_zeros()
+            }
+
+            /// Returns the number of trailing zeros in the binary representation of `self`.
+            ///
+            /// # Examples
+            ///
+            /// Basic usage:
+            ///
+            /// ```
+            /// #![feature(wrapping_int_impl)]
+            /// use std::num::ArbitraryWrapping;
+            ///
+            #[doc = concat!("let n = ArbitraryWrapping(0b0101000", stringify!($t), ");")]
+            ///
+            /// assert_eq!(n.trailing_zeros(), 3);
+            /// ```
+            #[inline]
+            #[must_use = "this returns the result of the operation, \
+                          without modifying the original"]
+            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
+            pub const fn trailing_zeros(self) -> u32 {
+                self.0.trailing_zeros()
+            }
 //
 //            /// Shifts the bits to the left by a specified amount, `n`,
 //            /// wrapping the truncated bits to the end of the resulting
@@ -692,9 +761,9 @@ macro_rules! wrapping_impl {
 //            pub fn pow(self, exp: u32) -> Self {
 //                ArbitraryWrapping(self.0.wrapping_pow(exp))
 //            }
-//        }
-//    )*)
-//}
+        }
+    }
+}
 //
 //wrapping_int_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 }
 //
