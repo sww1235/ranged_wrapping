@@ -40,113 +40,81 @@ use std::fmt;
 ///
 /// `Wrapping<T>` is guaranteed to have the same layout and ABI as `T`.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Hash)]
-pub struct ArbitraryWrapping<T, U, V>(T, U, V);
+pub struct ArbitraryWrapping<T, U>(T, U, U);
 
-impl<T: fmt::Debug, U, V> fmt::Debug for ArbitraryWrapping<T, U, V> {
+impl<T: fmt::Debug, U> fmt::Debug for ArbitraryWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::Display, U, V> fmt::Display for ArbitraryWrapping<T, U, V> {
+impl<T: fmt::Display, U> fmt::Display for ArbitraryWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::Binary, U, V> fmt::Binary for ArbitraryWrapping<T, U, V> {
+impl<T: fmt::Binary, U> fmt::Binary for ArbitraryWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::Octal, U, V> fmt::Octal for ArbitraryWrapping<T, U, V> {
+impl<T: fmt::Octal, U> fmt::Octal for ArbitraryWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::LowerHex, U, V> fmt::LowerHex for ArbitraryWrapping<T, U, V> {
+impl<T: fmt::LowerHex, U> fmt::LowerHex for ArbitraryWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::UpperHex, U, V> fmt::UpperHex for ArbitraryWrapping<T, U, V> {
+impl<T: fmt::UpperHex, U> fmt::UpperHex for ArbitraryWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
 #[allow(dead_code)]
-fn wrap<T, U, V>(input: T, max: U, min: V) -> T
+fn wrap<T, U>(input: T, max: U, min: U) -> T
 where
     T: std::cmp::PartialOrd<T>,
     T: std::cmp::PartialOrd<U>,
-    T: std::cmp::PartialOrd<V>,
     T: std::ops::Sub<T>,
     T: std::ops::Sub<U>,
-    T: std::ops::Sub<V>,
     T: std::ops::Add<T>,
     T: std::ops::Add<U>,
-    T: std::ops::Add<V>,
     T: std::ops::Mul<T>,
     T: std::ops::Mul<U>,
-    T: std::ops::Mul<V>,
     T: std::ops::Div<T>,
     T: std::ops::Div<U>,
-    T: std::ops::Div<V>,
     T: std::ops::Rem<T>,
     T: std::ops::Rem<U>,
-    T: std::ops::Rem<V>,
     T: std::ops::AddAssign<T>,
     T: From<i32>,
     T: From<U>,
-    T: From<V>,
     T: std::marker::Copy,
     U: std::cmp::PartialOrd<T>,
-    U: std::cmp::PartialOrd<V>,
     U: std::ops::Sub<T>,
-    U: std::ops::Sub<V>,
     U: std::ops::Add<T>,
-    U: std::ops::Add<V>,
     U: std::ops::Mul<T>,
-    U: std::ops::Mul<V>,
     U: std::ops::Div<T>,
-    U: std::ops::Div<V>,
     U: std::ops::Rem<T>,
-    U: std::ops::Rem<V>,
     U: From<i32>,
     U: std::marker::Copy,
-    V: std::cmp::PartialOrd<T>,
-    V: std::cmp::PartialOrd<U>,
-    V: std::ops::Sub<T>,
-    V: std::ops::Sub<U>,
-    V: std::ops::Add<T>,
-    V: std::ops::Add<U>,
-    V: std::ops::Mul<T>,
-    V: std::ops::Mul<U>,
-    V: std::ops::Div<T>,
-    V: std::ops::Div<U>,
-    V: std::ops::Rem<T>,
-    V: std::ops::Rem<U>,
-    V: From<i32>,
-    V: std::marker::Copy,
-    T: std::ops::Sub<V, Output = T>,
     T: std::ops::Sub<U, Output = T>,
     T: std::ops::Add<T, Output = T>,
     T: std::ops::Add<i32, Output = T>,
     T: std::ops::Mul<T, Output = T>,
     T: std::convert::From<<T as std::ops::Rem>::Output>,
-    T: std::convert::From<<U as std::ops::Sub<V>>::Output>,
     T: std::convert::From<<T as std::ops::Div>::Output>,
     T: std::ops::Add<U, Output = T>,
     U: std::ops::Sub<T, Output = T>,
     U: std::ops::Sub<U, Output = T>,
     U: std::ops::Add<i32, Output = T>,
-    V: std::ops::Sub<T, Output = T>,
-    V: std::ops::Sub<V, Output = T>,
-    V: std::ops::Add<i32, Output = T>,
 {
     let mut temp = input;
     let range_size: T = Into::<T>::into(max - min) + 1;
@@ -159,230 +127,230 @@ where
 // FIXME(30524): impl Op<T> for Wrapping<T>, impl OpAssign<T> for Wrapping<T>
 #[macro_export]
 macro_rules! wrapping_impl {
-    ($t:ident, $u:ident, $v:ident, $f:ident) => {
-        impl Add for ArbitraryWrapping<$t, $u, $v> {
-            type Output = ArbitraryWrapping<$t, $u, $v>;
+    ($t:ident, $u:ident, $f:ident) => {
+        impl Add for ArbitraryWrapping<$t, $u> {
+            type Output = ArbitraryWrapping<$t, $u>;
 
             #[inline]
-            fn add(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
+            fn add(self, other: ArbitraryWrapping<$t, $u>) -> ArbitraryWrapping<$t, $u> {
                 ArbitraryWrapping(wrap(self.0 + other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl Add, add for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
-                }
+        forward_ref_binop! { impl Add, add for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>,
+        }
 
-        impl AddAssign for ArbitraryWrapping<$t, $u, $v> {
+        impl AddAssign for ArbitraryWrapping<$t, $u> {
             #[inline]
-            fn add_assign(&mut self, other: ArbitraryWrapping<$t, $u, $v>) {
+            fn add_assign(&mut self, other: ArbitraryWrapping<$t, $u>) {
                 *self = *self + other;
             }
         }
-        forward_ref_op_assign! { impl AddAssign, add_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
+        forward_ref_op_assign! { impl AddAssign, add_assign for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u> }
 
-        impl AddAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
+        impl AddAssign<$t> for ArbitraryWrapping<$t, $u> {
             #[inline]
             fn add_assign(&mut self, other: $t) {
                 *self = *self + ArbitraryWrapping(other, self.1, self.2);
             }
         }
-        forward_ref_op_assign! { impl AddAssign, add_assign for ArbitraryWrapping<$t, $u, $v>, $t }
+        forward_ref_op_assign! { impl AddAssign, add_assign for ArbitraryWrapping<$t, $u>, $t }
 
-        impl Sub for ArbitraryWrapping<$t, $u, $v> {
-            type Output = ArbitraryWrapping<$t, $u, $v>;
+        impl Sub for ArbitraryWrapping<$t, $u> {
+            type Output = ArbitraryWrapping<$t, $u>;
 
             #[inline]
-            fn sub(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
+            fn sub(self, other: ArbitraryWrapping<$t, $u>) -> ArbitraryWrapping<$t, $u> {
                 ArbitraryWrapping(wrap(self.0 - other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl Sub, sub for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
-                }
+        forward_ref_binop! { impl Sub, sub for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>,
+        }
 
-        impl SubAssign for ArbitraryWrapping<$t, $u, $v> {
+        impl SubAssign for ArbitraryWrapping<$t, $u> {
             #[inline]
-            fn sub_assign(&mut self, other: ArbitraryWrapping<$t, $u, $v>) {
+            fn sub_assign(&mut self, other: ArbitraryWrapping<$t, $u>) {
                 *self = *self - other;
             }
         }
-        forward_ref_op_assign! { impl SubAssign, sub_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
+        forward_ref_op_assign! { impl SubAssign, sub_assign for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u> }
 
-        impl SubAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
+        impl SubAssign<$t> for ArbitraryWrapping<$t, $u> {
             #[inline]
             fn sub_assign(&mut self, other: $t) {
                 *self = *self - ArbitraryWrapping(other, self.1, self.2);
             }
         }
-        forward_ref_op_assign! { impl SubAssign, sub_assign for ArbitraryWrapping<$t, $u, $v>, $t }
+        forward_ref_op_assign! { impl SubAssign, sub_assign for ArbitraryWrapping<$t, $u>, $t }
 
-        impl Mul for ArbitraryWrapping<$t, $u, $v> {
-            type Output = ArbitraryWrapping<$t, $u, $v>;
+        impl Mul for ArbitraryWrapping<$t, $u> {
+            type Output = ArbitraryWrapping<$t, $u>;
 
             #[inline]
-            fn mul(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
+            fn mul(self, other: ArbitraryWrapping<$t, $u>) -> ArbitraryWrapping<$t, $u> {
                 ArbitraryWrapping(wrap(self.0 * other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl Mul, mul for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
-                }
+        forward_ref_binop! { impl Mul, mul for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>,
+        }
 
-        impl MulAssign for ArbitraryWrapping<$t, $u, $v> {
+        impl MulAssign for ArbitraryWrapping<$t, $u> {
             #[inline]
-            fn mul_assign(&mut self, other: ArbitraryWrapping<$t, $u, $v>) {
+            fn mul_assign(&mut self, other: ArbitraryWrapping<$t, $u>) {
                 *self = *self * other;
             }
         }
-        forward_ref_op_assign! { impl MulAssign, mul_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
+        forward_ref_op_assign! { impl MulAssign, mul_assign for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u> }
 
-        impl MulAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
+        impl MulAssign<$t> for ArbitraryWrapping<$t, $u> {
             #[inline]
             fn mul_assign(&mut self, other: $t) {
                 *self = *self * ArbitraryWrapping(other);
             }
         }
-        forward_ref_op_assign! { impl MulAssign, mul_assign for ArbitraryWrapping<$t, $u, $v>, $t }
+        forward_ref_op_assign! { impl MulAssign, mul_assign for ArbitraryWrapping<$t, $u>, $t }
 
-        impl Div for ArbitraryWrapping<$t, $u, $v> {
-            type Output = ArbitraryWrapping<$t, $u, $v>;
+        impl Div for ArbitraryWrapping<$t, $u> {
+            type Output = ArbitraryWrapping<$t, $u>;
 
             #[inline]
-            fn div(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
+            fn div(self, other: ArbitraryWrapping<$t, $u>) -> ArbitraryWrapping<$t, $u> {
                 ArbitraryWrapping(wrap(self.0 / other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl Div, div for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>,
-                #[stable(feature = "wrapping_ref", since = "1.14.0")] }
+        forward_ref_binop! { impl Div, div for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>,
+        #[stable(feature = "wrapping_ref", since = "1.14.0")] }
 
-        impl DivAssign for ArbitraryWrapping<$t, $u, $v> {
+        impl DivAssign for ArbitraryWrapping<$t, $u> {
             #[inline]
-            fn div_assign(&mut self, other: ArbitraryWrapping<$t, $u, $v>) {
+            fn div_assign(&mut self, other: ArbitraryWrapping<$t, $u>) {
                 *self = *self / other;
             }
         }
-        forward_ref_op_assign! { impl DivAssign, div_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
+        forward_ref_op_assign! { impl DivAssign, div_assign for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u> }
 
-        impl DivAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
+        impl DivAssign<$t> for ArbitraryWrapping<$t, $u> {
             #[inline]
             fn div_assign(&mut self, other: $t) {
                 *self = *self / ArbitraryWrapping(other);
             }
         }
-        forward_ref_op_assign! { impl DivAssign, div_assign for ArbitraryWrapping<$t, $u, $v>, $t }
+        forward_ref_op_assign! { impl DivAssign, div_assign for ArbitraryWrapping<$t, $u>, $t }
 
-        impl Rem for ArbitraryWrapping<$t, $u, $v> {
-            type Output = ArbitraryWrapping<$t, $u, $v>;
+        impl Rem for ArbitraryWrapping<$t, $u> {
+            type Output = ArbitraryWrapping<$t, $u>;
 
             #[inline]
-            fn rem(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
+            fn rem(self, other: ArbitraryWrapping<$t, $u>) -> ArbitraryWrapping<$t, $u> {
                 ArbitraryWrapping(wrap(self.0 % other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl Rem, rem for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
+        forward_ref_binop! { impl Rem, rem for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>}
 
-        impl RemAssign for ArbitraryWrapping<$t, $u, $v> {
+        impl RemAssign for ArbitraryWrapping<$t, $u> {
             #[inline]
-            fn rem_assign(&mut self, other: ArbitraryWrapping<$t, $u, $v>) {
+            fn rem_assign(&mut self, other: ArbitraryWrapping<$t, $u>) {
                 *self = *self % other;
             }
         }
-        forward_ref_op_assign! { impl RemAssign, rem_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
+        forward_ref_op_assign! { impl RemAssign, rem_assign for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>}
 
-        impl RemAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
+        impl RemAssign<$t> for ArbitraryWrapping<$t, $u> {
             #[inline]
             fn rem_assign(&mut self, other: $t) {
                 *self = *self % ArbitraryWrapping(other);
             }
         }
-        forward_ref_op_assign! { impl RemAssign, rem_assign for ArbitraryWrapping<$t, $u, $v>, $t }
+        forward_ref_op_assign! { impl RemAssign, rem_assign for ArbitraryWrapping<$t, $u>, $t }
 
-        impl Not for ArbitraryWrapping<$t, $u, $v> {
-            type Output = ArbitraryWrapping<$t, $u, $v>;
+        impl Not for ArbitraryWrapping<$t, $u> {
+            type Output = ArbitraryWrapping<$t, $u>;
 
             #[inline]
-            fn not(self) -> ArbitraryWrapping<$t, $u, $v> {
+            fn not(self) -> ArbitraryWrapping<$t, $u> {
                 ArbitraryWrapping(!self.0, self.1, self.2)
             }
         }
-        forward_ref_unop! { impl Not, not for ArbitraryWrapping<$t, $u, $v>, }
+        forward_ref_unop! { impl Not, not for ArbitraryWrapping<$t, $u>, }
 
-        impl BitXor for ArbitraryWrapping<$t, $u, $v> {
-            type Output = ArbitraryWrapping<$t, $u, $v>;
+        impl BitXor for ArbitraryWrapping<$t, $u> {
+            type Output = ArbitraryWrapping<$t, $u>;
 
             #[inline]
-            fn bitxor(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
+            fn bitxor(self, other: ArbitraryWrapping<$t, $u>) -> ArbitraryWrapping<$t, $u> {
                 ArbitraryWrapping(wrap(self.0 ^ other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl BitXor, bitxor for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
+        forward_ref_binop! { impl BitXor, bitxor for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>}
 
-        impl BitXorAssign for ArbitraryWrapping<$t, $u, $v> {
+        impl BitXorAssign for ArbitraryWrapping<$t, $u> {
             #[inline]
-            fn bitxor_assign(&mut self, other: ArbitraryWrapping<$t, $u, $v>) {
+            fn bitxor_assign(&mut self, other: ArbitraryWrapping<$t, $u>) {
                 *self = *self ^ other;
             }
         }
-        forward_ref_op_assign! { impl BitXorAssign, bitxor_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
+        forward_ref_op_assign! { impl BitXorAssign, bitxor_assign for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>}
 
-        impl BitXorAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
+        impl BitXorAssign<$t> for ArbitraryWrapping<$t, $u> {
             #[inline]
             fn bitxor_assign(&mut self, other: $t) {
                 *self = *self ^ ArbitraryWrapping(other);
             }
         }
-        forward_ref_op_assign! { impl BitXorAssign, bitxor_assign for ArbitraryWrapping<$t, $u, $v>, $t }
+        forward_ref_op_assign! { impl BitXorAssign, bitxor_assign for ArbitraryWrapping<$t, $u>, $t }
 
-        impl BitOr for ArbitraryWrapping<$t, $u, $v> {
-            type Output = ArbitraryWrapping<$t, $u, $v>;
+        impl BitOr for ArbitraryWrapping<$t, $u> {
+            type Output = ArbitraryWrapping<$t, $u>;
 
             #[inline]
-            fn bitor(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
+            fn bitor(self, other: ArbitraryWrapping<$t, $u>) -> ArbitraryWrapping<$t, $u> {
                 ArbitraryWrapping(wrap(self.0 | other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl BitOr, bitor for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
+        forward_ref_binop! { impl BitOr, bitor for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u> }
 
-        impl BitOrAssign for ArbitraryWrapping<$t, $u, $v> {
+        impl BitOrAssign for ArbitraryWrapping<$t, $u> {
             #[inline]
-            fn bitor_assign(&mut self, other: ArbitraryWrapping<$t, $u, $v>) {
+            fn bitor_assign(&mut self, other: ArbitraryWrapping<$t, $u>) {
                 *self = *self | other;
             }
         }
-        forward_ref_op_assign! { impl BitOrAssign, bitor_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v> }
+        forward_ref_op_assign! { impl BitOrAssign, bitor_assign for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u> }
 
-        impl BitOrAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
+        impl BitOrAssign<$t> for ArbitraryWrapping<$t, $u> {
             #[inline]
             fn bitor_assign(&mut self, other: $t) {
                 *self = *self | ArbitraryWrapping(other);
             }
         }
-        forward_ref_op_assign! { impl BitOrAssign, bitor_assign for ArbitraryWrapping<$t, $u, $v>, $t }
+        forward_ref_op_assign! { impl BitOrAssign, bitor_assign for ArbitraryWrapping<$t, $u>, $t }
 
-        impl BitAnd for ArbitraryWrapping<$t, $u, $v> {
-            type Output = ArbitraryWrapping<$t, $u, $v>;
+        impl BitAnd for ArbitraryWrapping<$t, $u> {
+            type Output = ArbitraryWrapping<$t, $u>;
 
             #[inline]
-            fn bitand(self, other: ArbitraryWrapping<$t, $u, $v>) -> ArbitraryWrapping<$t, $u, $v> {
+            fn bitand(self, other: ArbitraryWrapping<$t, $u>) -> ArbitraryWrapping<$t, $u> {
                 ArbitraryWrapping(wrap(self.0 & other.0, self.1, self.2), self.1, self.2)
             }
         }
-        forward_ref_binop! { impl BitAnd, bitand for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
+        forward_ref_binop! { impl BitAnd, bitand for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>}
 
-        impl BitAndAssign for ArbitraryWrapping<$t, $u, $v> {
+        impl BitAndAssign for ArbitraryWrapping<$t, $u> {
             #[inline]
-            fn bitand_assign(&mut self, other: ArbitraryWrapping<$t, $u, $v>) {
+            fn bitand_assign(&mut self, other: ArbitraryWrapping<$t, $u>) {
                 *self = *self & other;
             }
         }
-        forward_ref_op_assign! { impl BitAndAssign, bitand_assign for ArbitraryWrapping<$t, $u, $v>, ArbitraryWrapping<$t, $u, $v>}
+        forward_ref_op_assign! { impl BitAndAssign, bitand_assign for ArbitraryWrapping<$t, $u>, ArbitraryWrapping<$t, $u>}
 
-        impl BitAndAssign<$t> for ArbitraryWrapping<$t, $u, $v> {
+        impl BitAndAssign<$t> for ArbitraryWrapping<$t, $u> {
             #[inline]
             fn bitand_assign(&mut self, other: $t) {
                 *self = *self & ArbitraryWrapping(other);
             }
         }
-        forward_ref_op_assign! { impl BitAndAssign, bitand_assign for ArbitraryWrapping<$t, $u, $v>, $t }
+        forward_ref_op_assign! { impl BitAndAssign, bitand_assign for ArbitraryWrapping<$t, $u>, $t }
 
-        impl Neg for ArbitraryWrapping<$t, $u, $v> {
+        impl Neg for ArbitraryWrapping<$t, $u> {
             type Output = Self;
             #[inline]
             //TODO: panic if negation would be less than lower bound
@@ -390,17 +358,16 @@ macro_rules! wrapping_impl {
                 ArbitraryWrapping(0) - self
             }
         }
-        forward_ref_unop! { impl Neg, neg for ArbitraryWrapping<$t, $u, $v>}
-
-    }
+        forward_ref_unop! { impl Neg, neg for ArbitraryWrapping<$t, $u>}
+    };
 }
 
 //wrapping_impl! { usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128 }
 
 #[allow(dead_code, unused_macros)]
 macro_rules! wrapping_int_impl {
-    ($t:ident, $u:ident, $v:ident, $f:ident) => {
-        impl ArbitraryWrapping<$t, $u, $v> {
+    ($t:ident, $u:ident:ident, $f:ident) => {
+        impl ArbitraryWrapping<$t, $u> {
             /// Returns the smallest value that can be represented by this integer type.
             ///
             /// # Examples
@@ -769,7 +736,7 @@ macro_rules! wrapping_int_impl {
 //
 //macro_rules! wrapping_int_impl_signed {
 //    ($($t:ty)*) => ($(
-//        impl ArbitraryWrapping<$t, $u, $v> {
+//        impl ArbitraryWrapping<$t, $u> {
 //            /// Returns the number of leading zeros in the binary representation of `self`.
 //            ///
 //            /// # Examples
@@ -816,7 +783,7 @@ macro_rules! wrapping_int_impl {
 //            #[must_use = "this returns the result of the operation, \
 //                          without modifying the original"]
 //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-//            pub fn abs(self) -> ArbitraryWrapping<$t, $u, $v> {
+//            pub fn abs(self) -> ArbitraryWrapping<$t, $u> {
 //                ArbitraryWrapping(self.0.wrapping_abs())
 //            }
 //
@@ -842,7 +809,7 @@ macro_rules! wrapping_int_impl {
 //            #[must_use = "this returns the result of the operation, \
 //                          without modifying the original"]
 //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-//            pub fn signum(self) -> ArbitraryWrapping<$t, $u, $v> {
+//            pub fn signum(self) -> ArbitraryWrapping<$t, $u> {
 //                ArbitraryWrapping(self.0.signum())
 //            }
 //
@@ -895,7 +862,7 @@ macro_rules! wrapping_int_impl {
 
 //macro_rules! wrapping_int_impl_unsigned {
 //    ($($t:ty)*) => ($(
-//        impl ArbitraryWrapping<$t, $u, $v> {
+//        impl ArbitraryWrapping<$t, $u> {
 //            /// Returns the number of leading zeros in the binary representation of `self`.
 //            ///
 //            /// # Examples
