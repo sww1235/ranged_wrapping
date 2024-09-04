@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "arbitrary_wrapping"
+name = "ranged_wrapping"
 version = "0.0.1"
