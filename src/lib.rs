@@ -79,6 +79,7 @@ impl<T: fmt::UpperHex, U> fmt::UpperHex for ArbitraryWrapping<T, U> {
 }
 
 #[allow(dead_code)]
+//https://stackoverflow.com/a/14416133/3342767
 fn wrap<T, U>(input: T, max: U, min: U) -> T
 where
     T: std::cmp::PartialOrd<T>,
@@ -106,9 +107,11 @@ where
     U: From<i32>,
     U: std::marker::Copy,
     T: std::ops::Sub<U, Output = T>,
+    T: std::ops::Sub<T, Output = T>,
     T: std::ops::Add<T, Output = T>,
     T: std::ops::Add<i32, Output = T>,
     T: std::ops::Mul<T, Output = T>,
+    T: std::ops::Rem<T, Output = T>,
     T: std::convert::From<<T as std::ops::Rem>::Output>,
     T: std::convert::From<<T as std::ops::Div>::Output>,
     T: std::ops::Add<U, Output = T>,
@@ -116,12 +119,20 @@ where
     U: std::ops::Sub<U, Output = T>,
     U: std::ops::Add<i32, Output = T>,
 {
-    let mut temp = input;
-    let range_size: T = Into::<T>::into(max - min) + 1;
-    if input < min {
-        temp += range_size * Into::<T>::into(Into::<T>::into((min - input) / range_size) + 1);
-    }
-    Into::<T>::into(min) + Into::<T>::into((input - min) % range_size)
+    //if input < min {
+    //    Into::<T>::into(max) - Into::<T>::into(Into::<T>::into(min - input) % Into::<T>::into(max - min))
+    //} else {
+    //    Into::<T>::into(min) + Into::<T>::into(Into::<T>::into(input - min) % Into::<T>::into(max - min))
+    //}
+    //let mut temp = input;
+    //let modulus = max - min + 1;
+    //temp = (temp - min) % modulus;
+    //if temp < Into::<T>::into(0) {
+    //    temp += modulus;
+    //}
+    //temp += min.into();
+    //temp
+    ((input - min) % (max - min + 1) + (max - min + 1)) % (max - min + 1) + min
 }
 
 // FIXME(30524): impl Op<T> for Wrapping<T>, impl OpAssign<T> for Wrapping<T>
@@ -971,3 +982,17 @@ macro_rules! wrapping_int_impl {
 //    pub const u128: u32 = i128;
 //    pub use self::platform::usize;
 //}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // testing basic wrap function
+    #[test]
+    fn test_wrap() {
+        //fn wrap<T, U>(input: T, max: U, min: U) -> T
+        assert_eq!(wrap(10, 5, 2), 5);
+        assert_eq!(wrap(10, 10, 2), 10);
+        assert_eq!(wrap(-2, 10, 2), 2);
+    }
+}
