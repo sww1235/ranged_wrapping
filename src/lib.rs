@@ -1,6 +1,6 @@
 //! Definitions of `RangedWrapping<T, U>`.
 
-use std::cmp::PartialOrd;
+use std::cmp::{PartialEq, PartialOrd};
 use std::fmt;
 use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign, Neg, Not,
@@ -113,7 +113,6 @@ impl<T: fmt::UpperHex, U> fmt::UpperHex for RangedWrapping<T, U> {
     }
 }
 
-//TODO: need to make sure that the max/min values are the same on any of these operations
 impl<T, U> Add for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
@@ -131,11 +130,15 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     type Output = RangedWrapping<T, U>;
 
     #[inline]
     fn add(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         RangedWrapping(wrap(self.0 + other.0, self.1, self.2), self.1, self.2)
     }
 }
@@ -157,9 +160,13 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     #[inline]
     fn add_assign(&mut self, other: Self) {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         *self = *self + RangedWrapping(other.0, self.1, self.2);
     }
 }
@@ -181,11 +188,15 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     type Output = RangedWrapping<T, U>;
 
     #[inline]
     fn sub(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         RangedWrapping(wrap(self.0 - other.0, self.1, self.2), self.1, self.2)
     }
 }
@@ -206,9 +217,13 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     #[inline]
     fn sub_assign(&mut self, other: Self) {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         *self = *self - RangedWrapping(other.0, self.1, self.2);
     }
 }
@@ -230,11 +245,15 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     type Output = RangedWrapping<T, U>;
 
     #[inline]
     fn mul(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         RangedWrapping(wrap(self.0 * other.0, self.1, self.2), self.1, self.2)
     }
 }
@@ -256,9 +275,13 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     #[inline]
     fn mul_assign(&mut self, other: Self) {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         *self = *self * RangedWrapping(other.0, self.1, self.2);
     }
 }
@@ -280,11 +303,15 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     type Output = RangedWrapping<T, U>;
 
     #[inline]
     fn div(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         RangedWrapping(wrap(self.0 / other.0, self.1, self.2), self.1, self.2)
     }
 }
@@ -306,9 +333,13 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     #[inline]
     fn div_assign(&mut self, other: Self) {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         *self = *self / RangedWrapping(other.0, self.1, self.2);
     }
 }
@@ -330,11 +361,15 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     type Output = RangedWrapping<T, U>;
 
     #[inline]
     fn rem(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         RangedWrapping(wrap(self.0 % other.0, self.1, self.2), self.1, self.2)
     }
 }
@@ -356,9 +391,13 @@ where
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     #[inline]
     fn rem_assign(&mut self, other: Self) {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         *self = *self % RangedWrapping(other.0, self.1, self.2);
     }
 }
@@ -408,11 +447,15 @@ where
     T: BitXor<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     type Output = RangedWrapping<T, U>;
 
     #[inline]
     fn bitxor(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         RangedWrapping(wrap(self.0 ^ other.0, self.1, self.2), self.1, self.2)
     }
 }
@@ -435,9 +478,13 @@ where
     T: BitXor<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     #[inline]
     fn bitxor_assign(&mut self, other: Self) {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         *self = *self ^ RangedWrapping(other.0, self.1, self.2);
     }
 }
@@ -460,11 +507,15 @@ where
     T: BitOr<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     type Output = RangedWrapping<T, U>;
 
     #[inline]
     fn bitor(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         RangedWrapping(wrap(self.0 | other.0, self.1, self.2), self.1, self.2)
     }
 }
@@ -487,9 +538,13 @@ where
     T: BitOr<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     #[inline]
     fn bitor_assign(&mut self, other: Self) {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         *self = *self | RangedWrapping(other.0, self.1, self.2);
     }
 }
@@ -512,11 +567,15 @@ where
     T: BitAnd<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     type Output = RangedWrapping<T, U>;
 
     #[inline]
     fn bitand(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         RangedWrapping(wrap(self.0 & other.0, self.1, self.2), self.1, self.2)
     }
 }
@@ -539,10 +598,14 @@ where
     T: BitAnd<T, Output = T>,
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 {
     #[inline]
     //TODO: need to make sure this actually wraps properly
     fn bitand_assign(&mut self, other: Self) {
+        if self.1 != other.1 || self.2 != other.2 {
+            panic!("self and other values of RangedWrapping do not have the same bounds")
+        }
         *self = *self & RangedWrapping(other.0, self.1, self.2);
     }
 }
