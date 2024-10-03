@@ -1,4 +1,4 @@
-//! Definitions of `ArbitraryWrapping<T, U>`.
+//! Definitions of `RangedWrapping<T, U>`.
 
 use std::cmp::PartialOrd;
 use std::fmt;
@@ -39,7 +39,7 @@ use std::ops::{
 ///
 /// `Wrapping<T>` is guaranteed to have the same layout and ABI as `T`.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Hash)]
-pub struct ArbitraryWrapping<T, U>(T, U, U);
+pub struct RangedWrapping<T, U>(T, U, U);
 
 //https://stackoverflow.com/a/14416133/3342767
 //
@@ -77,44 +77,44 @@ where
     Into::<T>::into(min) + (temp - min) % range_size
 }
 
-impl<T: fmt::Debug, U> fmt::Debug for ArbitraryWrapping<T, U> {
+impl<T: fmt::Debug, U> fmt::Debug for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::Display, U> fmt::Display for ArbitraryWrapping<T, U> {
+impl<T: fmt::Display, U> fmt::Display for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::Binary, U> fmt::Binary for ArbitraryWrapping<T, U> {
+impl<T: fmt::Binary, U> fmt::Binary for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::Octal, U> fmt::Octal for ArbitraryWrapping<T, U> {
+impl<T: fmt::Octal, U> fmt::Octal for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::LowerHex, U> fmt::LowerHex for ArbitraryWrapping<T, U> {
+impl<T: fmt::LowerHex, U> fmt::LowerHex for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl<T: fmt::UpperHex, U> fmt::UpperHex for ArbitraryWrapping<T, U> {
+impl<T: fmt::UpperHex, U> fmt::UpperHex for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
 //TODO: need to make sure that the max/min values are the same on any of these operations
-impl<T, U> Add for ArbitraryWrapping<T, U>
+impl<T, U> Add for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -132,15 +132,15 @@ where
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
 {
-    type Output = ArbitraryWrapping<T, U>;
+    type Output = RangedWrapping<T, U>;
 
     #[inline]
-    fn add(self, other: ArbitraryWrapping<T, U>) -> ArbitraryWrapping<T, U> {
-        ArbitraryWrapping(wrap(self.0 + other.0, self.1, self.2), self.1, self.2)
+    fn add(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        RangedWrapping(wrap(self.0 + other.0, self.1, self.2), self.1, self.2)
     }
 }
 
-impl<T, U> AddAssign for ArbitraryWrapping<T, U>
+impl<T, U> AddAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -160,11 +160,11 @@ where
 {
     #[inline]
     fn add_assign(&mut self, other: Self) {
-        *self = *self + ArbitraryWrapping(other.0, self.1, self.2);
+        *self = *self + RangedWrapping(other.0, self.1, self.2);
     }
 }
 
-impl<T, U> Sub for ArbitraryWrapping<T, U>
+impl<T, U> Sub for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -182,14 +182,14 @@ where
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
 {
-    type Output = ArbitraryWrapping<T, U>;
+    type Output = RangedWrapping<T, U>;
 
     #[inline]
-    fn sub(self, other: ArbitraryWrapping<T, U>) -> ArbitraryWrapping<T, U> {
-        ArbitraryWrapping(wrap(self.0 - other.0, self.1, self.2), self.1, self.2)
+    fn sub(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        RangedWrapping(wrap(self.0 - other.0, self.1, self.2), self.1, self.2)
     }
 }
-impl<T, U> SubAssign for ArbitraryWrapping<T, U>
+impl<T, U> SubAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -209,11 +209,11 @@ where
 {
     #[inline]
     fn sub_assign(&mut self, other: Self) {
-        *self = *self - ArbitraryWrapping(other.0, self.1, self.2);
+        *self = *self - RangedWrapping(other.0, self.1, self.2);
     }
 }
 
-impl<T, U> Mul for ArbitraryWrapping<T, U>
+impl<T, U> Mul for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -231,15 +231,15 @@ where
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
 {
-    type Output = ArbitraryWrapping<T, U>;
+    type Output = RangedWrapping<T, U>;
 
     #[inline]
-    fn mul(self, other: ArbitraryWrapping<T, U>) -> ArbitraryWrapping<T, U> {
-        ArbitraryWrapping(wrap(self.0 * other.0, self.1, self.2), self.1, self.2)
+    fn mul(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        RangedWrapping(wrap(self.0 * other.0, self.1, self.2), self.1, self.2)
     }
 }
 
-impl<T, U> MulAssign for ArbitraryWrapping<T, U>
+impl<T, U> MulAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -259,11 +259,11 @@ where
 {
     #[inline]
     fn mul_assign(&mut self, other: Self) {
-        *self = *self * ArbitraryWrapping(other.0, self.1, self.2);
+        *self = *self * RangedWrapping(other.0, self.1, self.2);
     }
 }
 
-impl<T, U> Div for ArbitraryWrapping<T, U>
+impl<T, U> Div for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -281,15 +281,15 @@ where
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
 {
-    type Output = ArbitraryWrapping<T, U>;
+    type Output = RangedWrapping<T, U>;
 
     #[inline]
-    fn div(self, other: ArbitraryWrapping<T, U>) -> ArbitraryWrapping<T, U> {
-        ArbitraryWrapping(wrap(self.0 / other.0, self.1, self.2), self.1, self.2)
+    fn div(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        RangedWrapping(wrap(self.0 / other.0, self.1, self.2), self.1, self.2)
     }
 }
 
-impl<T, U> DivAssign for ArbitraryWrapping<T, U>
+impl<T, U> DivAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -309,11 +309,11 @@ where
 {
     #[inline]
     fn div_assign(&mut self, other: Self) {
-        *self = *self / ArbitraryWrapping(other.0, self.1, self.2);
+        *self = *self / RangedWrapping(other.0, self.1, self.2);
     }
 }
 
-impl<T, U> Rem for ArbitraryWrapping<T, U>
+impl<T, U> Rem for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -331,15 +331,15 @@ where
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
 {
-    type Output = ArbitraryWrapping<T, U>;
+    type Output = RangedWrapping<T, U>;
 
     #[inline]
-    fn rem(self, other: ArbitraryWrapping<T, U>) -> ArbitraryWrapping<T, U> {
-        ArbitraryWrapping(wrap(self.0 % other.0, self.1, self.2), self.1, self.2)
+    fn rem(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        RangedWrapping(wrap(self.0 % other.0, self.1, self.2), self.1, self.2)
     }
 }
 
-impl<T, U> RemAssign for ArbitraryWrapping<T, U>
+impl<T, U> RemAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -359,11 +359,11 @@ where
 {
     #[inline]
     fn rem_assign(&mut self, other: Self) {
-        *self = *self % ArbitraryWrapping(other.0, self.1, self.2);
+        *self = *self % RangedWrapping(other.0, self.1, self.2);
     }
 }
 
-impl<T, U> Not for ArbitraryWrapping<T, U>
+impl<T, U> Not for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -382,15 +382,15 @@ where
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
 {
-    type Output = ArbitraryWrapping<T, U>;
+    type Output = RangedWrapping<T, U>;
 
     #[inline]
-    fn not(self) -> ArbitraryWrapping<T, U> {
-        ArbitraryWrapping(!self.0, self.1, self.2)
+    fn not(self) -> RangedWrapping<T, U> {
+        RangedWrapping(!self.0, self.1, self.2)
     }
 }
 
-impl<T, U> BitXor for ArbitraryWrapping<T, U>
+impl<T, U> BitXor for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -409,15 +409,15 @@ where
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
 {
-    type Output = ArbitraryWrapping<T, U>;
+    type Output = RangedWrapping<T, U>;
 
     #[inline]
-    fn bitxor(self, other: ArbitraryWrapping<T, U>) -> ArbitraryWrapping<T, U> {
-        ArbitraryWrapping(wrap(self.0 ^ other.0, self.1, self.2), self.1, self.2)
+    fn bitxor(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        RangedWrapping(wrap(self.0 ^ other.0, self.1, self.2), self.1, self.2)
     }
 }
 
-impl<T, U> BitXorAssign for ArbitraryWrapping<T, U>
+impl<T, U> BitXorAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -438,11 +438,11 @@ where
 {
     #[inline]
     fn bitxor_assign(&mut self, other: Self) {
-        *self = *self ^ ArbitraryWrapping(other.0, self.1, self.2);
+        *self = *self ^ RangedWrapping(other.0, self.1, self.2);
     }
 }
 
-impl<T, U> BitOr for ArbitraryWrapping<T, U>
+impl<T, U> BitOr for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -461,15 +461,15 @@ where
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
 {
-    type Output = ArbitraryWrapping<T, U>;
+    type Output = RangedWrapping<T, U>;
 
     #[inline]
-    fn bitor(self, other: ArbitraryWrapping<T, U>) -> ArbitraryWrapping<T, U> {
-        ArbitraryWrapping(wrap(self.0 | other.0, self.1, self.2), self.1, self.2)
+    fn bitor(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        RangedWrapping(wrap(self.0 | other.0, self.1, self.2), self.1, self.2)
     }
 }
 
-impl<T, U> BitOrAssign for ArbitraryWrapping<T, U>
+impl<T, U> BitOrAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -490,11 +490,11 @@ where
 {
     #[inline]
     fn bitor_assign(&mut self, other: Self) {
-        *self = *self | ArbitraryWrapping(other.0, self.1, self.2);
+        *self = *self | RangedWrapping(other.0, self.1, self.2);
     }
 }
 
-impl<T, U> BitAnd for ArbitraryWrapping<T, U>
+impl<T, U> BitAnd for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -513,15 +513,15 @@ where
     U: Sub<U, Output = T>,
     U: Add<i32, Output = T>,
 {
-    type Output = ArbitraryWrapping<T, U>;
+    type Output = RangedWrapping<T, U>;
 
     #[inline]
-    fn bitand(self, other: ArbitraryWrapping<T, U>) -> ArbitraryWrapping<T, U> {
-        ArbitraryWrapping(wrap(self.0 & other.0, self.1, self.2), self.1, self.2)
+    fn bitand(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
+        RangedWrapping(wrap(self.0 & other.0, self.1, self.2), self.1, self.2)
     }
 }
 
-impl<T, U> BitAndAssign for ArbitraryWrapping<T, U>
+impl<T, U> BitAndAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -543,11 +543,11 @@ where
     #[inline]
     //TODO: need to make sure this actually wraps properly
     fn bitand_assign(&mut self, other: Self) {
-        *self = *self & ArbitraryWrapping(other.0, self.1, self.2);
+        *self = *self & RangedWrapping(other.0, self.1, self.2);
     }
 }
 
-impl<T, U> Neg for ArbitraryWrapping<T, U>
+impl<T, U> Neg for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
     T: PartialOrd<U>,
@@ -574,12 +574,12 @@ where
         if temp < self.2 {
             panic!("negative value is out of wrapped bounds");
         }
-        ArbitraryWrapping(temp, self.1, self.2)
+        RangedWrapping(temp, self.1, self.2)
     }
 }
 
 //TODO: fix
-impl<T, U> ArbitraryWrapping<T, U> {
+impl<T, U> RangedWrapping<T, U> {
     //    /// Returns the smallest value that can be represented by this type.
     //    ///
     //    //pub const MIN: U = self.1;
@@ -600,19 +600,19 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //            ///
     //            /// ```
     //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert_eq!(ArbitraryWrapping(100", stringify!(T), ").abs(), ArbitraryWrapping(100));")]
-    //            #[doc = concat!("assert_eq!(ArbitraryWrapping(-100", stringify!(T), ").abs(), ArbitraryWrapping(100));")]
-    //            #[doc = concat!("assert_eq!(ArbitraryWrapping(", stringify!(T), "::MIN).abs(), ArbitraryWrapping(", stringify!(T), "::MIN));")]
-    //            /// assert_eq!(ArbitraryWrapping(-128i8).abs().0 as u8, 128u8);
+    //            #[doc = concat!("assert_eq!(RangedWrapping(100", stringify!(T), ").abs(), RangedWrapping(100));")]
+    //            #[doc = concat!("assert_eq!(RangedWrapping(-100", stringify!(T), ").abs(), RangedWrapping(100));")]
+    //            #[doc = concat!("assert_eq!(RangedWrapping(", stringify!(T), "::MIN).abs(), RangedWrapping(", stringify!(T), "::MIN));")]
+    //            /// assert_eq!(RangedWrapping(-128i8).abs().0 as u8, 128u8);
     //            /// ```
     //            #[inline]
     //            #[must_use = "this returns the result of the operation, \
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-    //            pub fn abs(self) -> ArbitraryWrapping<T, U> {
-    //                ArbitraryWrapping(self.0.wrapping_abs())
+    //            pub fn abs(self) -> RangedWrapping<T, U> {
+    //                RangedWrapping(self.0.wrapping_abs())
     //            }
     //
     //            /// Returns a number representing sign of `self`.
@@ -627,18 +627,18 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //            ///
     //            /// ```
     //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert_eq!(ArbitraryWrapping(10", stringify!(T), ").signum(), ArbitraryWrapping(1));")]
-    //            #[doc = concat!("assert_eq!(ArbitraryWrapping(0", stringify!(T), ").signum(), ArbitraryWrapping(0));")]
-    //            #[doc = concat!("assert_eq!(ArbitraryWrapping(-10", stringify!(T), ").signum(), ArbitraryWrapping(-1));")]
+    //            #[doc = concat!("assert_eq!(RangedWrapping(10", stringify!(T), ").signum(), RangedWrapping(1));")]
+    //            #[doc = concat!("assert_eq!(RangedWrapping(0", stringify!(T), ").signum(), RangedWrapping(0));")]
+    //            #[doc = concat!("assert_eq!(RangedWrapping(-10", stringify!(T), ").signum(), RangedWrapping(-1));")]
     //            /// ```
     //            #[inline]
     //            #[must_use = "this returns the result of the operation, \
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-    //            pub fn signum(self) -> ArbitraryWrapping<T, U> {
-    //                ArbitraryWrapping(self.0.signum())
+    //            pub fn signum(self) -> RangedWrapping<T, U> {
+    //                RangedWrapping(self.0.signum())
     //            }
     //
     //            /// Returns `true` if `self` is positive and `false` if the number is zero or
@@ -650,10 +650,10 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //            ///
     //            /// ```
     //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert!(ArbitraryWrapping(10", stringify!(T), ").is_positive());")]
-    //            #[doc = concat!("assert!(!ArbitraryWrapping(-10", stringify!(T), ").is_positive());")]
+    //            #[doc = concat!("assert!(RangedWrapping(10", stringify!(T), ").is_positive());")]
+    //            #[doc = concat!("assert!(!RangedWrapping(-10", stringify!(T), ").is_positive());")]
     //            /// ```
     //            #[must_use]
     //            #[inline]
@@ -671,10 +671,10 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //            ///
     //            /// ```
     //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert!(ArbitraryWrapping(-10", stringify!(T), ").is_negative());")]
-    //            #[doc = concat!("assert!(!ArbitraryWrapping(10", stringify!(T), ").is_negative());")]
+    //            #[doc = concat!("assert!(RangedWrapping(-10", stringify!(T), ").is_negative());")]
+    //            #[doc = concat!("assert!(!RangedWrapping(10", stringify!(T), ").is_negative());")]
     //            /// ```
     //            #[must_use]
     //            #[inline]
@@ -697,10 +697,10 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //            ///
     //            /// ```
     //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// let n: ArbitraryWrapping<i64> = ArbitraryWrapping(0x0123456789ABCDEF);
-    //            /// let m: ArbitraryWrapping<i64> = ArbitraryWrapping(-0x76543210FEDCBA99);
+    //            /// let n: RangedWrapping<i64> = RangedWrapping(0x0123456789ABCDEF);
+    //            /// let m: RangedWrapping<i64> = RangedWrapping(-0x76543210FEDCBA99);
     //            ///
     //            /// assert_eq!(n.rotate_left(32), m);
     //            /// ```
@@ -709,7 +709,7 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub const fn rotate_left(self, n: u32) -> Self {
-    //                ArbitraryWrapping(self.0.rotate_left(n))
+    //                RangedWrapping(self.0.rotate_left(n))
     //            }
     //
     //            /// Shifts the bits to the right by a specified amount, `n`,
@@ -725,10 +725,10 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //            ///
     //            /// ```
     //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// let n: ArbitraryWrapping<i64> = ArbitraryWrapping(0x0123456789ABCDEF);
-    //            /// let m: ArbitraryWrapping<i64> = ArbitraryWrapping(-0xFEDCBA987654322);
+    //            /// let n: RangedWrapping<i64> = RangedWrapping(0x0123456789ABCDEF);
+    //            /// let m: RangedWrapping<i64> = RangedWrapping(-0xFEDCBA987654322);
     //            ///
     //            /// assert_eq!(n.rotate_right(4), m);
     //            /// ```
@@ -737,7 +737,7 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub const fn rotate_right(self, n: u32) -> Self {
-    //                ArbitraryWrapping(self.0.rotate_right(n))
+    //                RangedWrapping(self.0.rotate_right(n))
     //            }
     //
     //            /// Reverses the byte order of the integer.
@@ -748,22 +748,22 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //            ///
     //            /// ```
     //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// let n: ArbitraryWrapping<i16> = ArbitraryWrapping(0b0000000_01010101);
-    //            /// assert_eq!(n, ArbitraryWrapping(85));
+    //            /// let n: RangedWrapping<i16> = RangedWrapping(0b0000000_01010101);
+    //            /// assert_eq!(n, RangedWrapping(85));
     //            ///
     //            /// let m = n.swap_bytes();
     //            ///
-    //            /// assert_eq!(m, ArbitraryWrapping(0b01010101_00000000));
-    //            /// assert_eq!(m, ArbitraryWrapping(21760));
+    //            /// assert_eq!(m, RangedWrapping(0b01010101_00000000));
+    //            /// assert_eq!(m, RangedWrapping(21760));
     //            /// ```
     //            #[inline]
     //            #[must_use = "this returns the result of the operation, \
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub const fn swap_bytes(self) -> Self {
-    //                ArbitraryWrapping(self.0.swap_bytes())
+    //                RangedWrapping(self.0.swap_bytes())
     //            }
     //
     //            /// Reverses the bit pattern of the integer.
@@ -776,15 +776,15 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //            /// Basic usage:
     //            ///
     //            /// ```
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// let n = ArbitraryWrapping(0b0000000_01010101i16);
-    //            /// assert_eq!(n, ArbitraryWrapping(85));
+    //            /// let n = RangedWrapping(0b0000000_01010101i16);
+    //            /// assert_eq!(n, RangedWrapping(85));
     //            ///
     //            /// let m = n.reverse_bits();
     //            ///
     //            /// assert_eq!(m.0 as u16, 0b10101010_00000000);
-    //            /// assert_eq!(m, ArbitraryWrapping(-22016));
+    //            /// assert_eq!(m, RangedWrapping(-22016));
     //            /// ```
     //            #[stable(feature = "reverse_bits", since = "1.37.0")]
     //            #[rustc_const_stable(feature = "const_reverse_bits", since = "1.37.0")]
@@ -792,7 +792,7 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //                          without modifying the original"]
     //            #[inline]
     //            pub const fn reverse_bits(self) -> Self {
-    //                ArbitraryWrapping(self.0.reverse_bits())
+    //                RangedWrapping(self.0.reverse_bits())
     //            }
     //
     //            /// Raises self to the power of `exp`, using exponentiation by squaring.
@@ -803,26 +803,26 @@ impl<T, U> ArbitraryWrapping<T, U> {
     //            ///
     //            /// ```
     //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert_eq!(ArbitraryWrapping(3", stringify!(T), ").pow(4), ArbitraryWrapping(81));")]
+    //            #[doc = concat!("assert_eq!(RangedWrapping(3", stringify!(T), ").pow(4), RangedWrapping(81));")]
     //            /// ```
     //            ///
     //            /// Results that are too large are wrapped:
     //            ///
     //            /// ```
     //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::ArbitraryWrapping;
+    //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// assert_eq!(ArbitraryWrapping(3i8).pow(5), ArbitraryWrapping(-13));
-    //            /// assert_eq!(ArbitraryWrapping(3i8).pow(6), ArbitraryWrapping(-39));
+    //            /// assert_eq!(RangedWrapping(3i8).pow(5), RangedWrapping(-13));
+    //            /// assert_eq!(RangedWrapping(3i8).pow(6), RangedWrapping(-39));
     //            /// ```
     //            #[inline]
     //            #[must_use = "this returns the result of the operation, \
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub fn pow(self, exp: u32) -> Self {
-    //                ArbitraryWrapping(self.0.wrapping_pow(exp))
+    //                RangedWrapping(self.0.wrapping_pow(exp))
     //            }
 }
 
