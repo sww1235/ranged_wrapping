@@ -1,4 +1,4 @@
-//! Definitions of `ArbitraryWrapping<T, U, V>`.
+//! Definitions of `ArbitraryWrapping<T, U>`.
 
 use std::fmt;
 //use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign};
@@ -80,59 +80,39 @@ impl<T: fmt::UpperHex, U> fmt::UpperHex for ArbitraryWrapping<T, U> {
 
 #[allow(dead_code)]
 //https://stackoverflow.com/a/14416133/3342767
+//
+//https://users.rust-lang.org/t/wrapping-a-number-around-a-designated-inclusive-range/116737/2?u=sww1235
 fn wrap<T, U>(input: T, max: U, min: U) -> T
 where
-    T: std::cmp::PartialOrd<T>,
+    T: std::cmp::PartialOrd<T> + std::ops::AddAssign,
     T: std::cmp::PartialOrd<U>,
-    T: std::ops::Sub<T>,
-    T: std::ops::Sub<U>,
-    T: std::ops::Add<T>,
-    T: std::ops::Add<U>,
-    T: std::ops::Mul<T>,
-    T: std::ops::Mul<U>,
-    T: std::ops::Div<T>,
-    T: std::ops::Div<U>,
-    T: std::ops::Rem<T>,
-    T: std::ops::Rem<U>,
-    T: std::ops::AddAssign<T>,
-    T: From<i32>,
     T: From<U>,
     T: std::marker::Copy,
-    U: std::cmp::PartialOrd<T>,
-    U: std::ops::Sub<T>,
-    U: std::ops::Add<T>,
-    U: std::ops::Mul<T>,
-    U: std::ops::Div<T>,
-    U: std::ops::Rem<T>,
-    U: From<i32>,
     U: std::marker::Copy,
-    T: std::ops::Sub<U, Output = T>,
     T: std::ops::Sub<T, Output = T>,
-    T: std::ops::Add<T, Output = T>,
+    T: std::ops::Sub<U, Output = T>,
     T: std::ops::Add<i32, Output = T>,
-    T: std::ops::Mul<T, Output = T>,
-    T: std::ops::Rem<T, Output = T>,
-    T: std::convert::From<<T as std::ops::Rem>::Output>,
-    T: std::convert::From<<T as std::ops::Div>::Output>,
+    T: std::ops::Add<T, Output = T>,
     T: std::ops::Add<U, Output = T>,
-    U: std::ops::Sub<T, Output = T>,
+    T: std::ops::Mul<T, Output = T>,
+    T: std::ops::Div<T, Output = T>,
+    T: std::ops::Rem<T, Output = T>,
     U: std::ops::Sub<U, Output = T>,
     U: std::ops::Add<i32, Output = T>,
 {
-    //if input < min {
-    //    Into::<T>::into(max) - Into::<T>::into(Into::<T>::into(min - input) % Into::<T>::into(max - min))
-    //} else {
-    //    Into::<T>::into(min) + Into::<T>::into(Into::<T>::into(input - min) % Into::<T>::into(max - min))
-    //}
-    //let mut temp = input;
-    //let modulus = max - min + 1;
-    //temp = (temp - min) % modulus;
-    //if temp < Into::<T>::into(0) {
-    //    temp += modulus;
-    //}
-    //temp += min.into();
-    //temp
-    ((input - min) % (max - min + 1) + (max - min + 1)) % (max - min + 1) + min
+    if input <= max && input >= min {
+        return input;
+    }
+
+    let range_size = max - min + 1;
+
+    let mut temp = input;
+
+    if temp < min {
+        temp += range_size * ((Into::<T>::into(min) - temp) / range_size + 1);
+    }
+
+    Into::<T>::into(min) + (temp - min) % range_size
 }
 
 // FIXME(30524): impl Op<T> for Wrapping<T>, impl OpAssign<T> for Wrapping<T>
@@ -991,8 +971,8 @@ mod tests {
     #[test]
     fn test_wrap() {
         //fn wrap<T, U>(input: T, max: U, min: U) -> T
-        assert_eq!(wrap(10, 5, 2), 5);
+        assert_eq!(wrap(10, 5, 2), 2);
         assert_eq!(wrap(10, 10, 2), 10);
-        assert_eq!(wrap(-2, 10, 2), 2);
+        assert_eq!(wrap(-2, 10, 2), 7);
     }
 }
