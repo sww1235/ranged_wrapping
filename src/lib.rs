@@ -1,12 +1,11 @@
 //! Definitions of `ArbitraryWrapping<T, U>`.
 
+use std::cmp::PartialOrd;
 use std::fmt;
-//use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign};
-//use std::ops::{BitXor, BitXorAssign, Div, DivAssign};
-//use std::ops::{Mul, MulAssign, Neg, Not, Rem, RemAssign};
-//use std::ops::{Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign};
-
-//use forward_ref::{forward_ref_binop, forward_ref_op_assign, forward_ref_unop};
+use std::ops::{
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign, Neg, Not,
+    Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+};
 
 //TODO: fix this documenation
 /// Provides intentionally-wrapped arithmetic on `T`.
