@@ -893,6 +893,11 @@ impl<T, U> RangedWrapping<T, U> {
 mod tests {
     use super::*;
 
+    struct TestStruct {
+        id: u64,
+        content: RangedWrapping<usize, usize>,
+    }
+
     // testing basic wrap function
     #[test]
     fn test_wrap() {
@@ -900,5 +905,31 @@ mod tests {
         assert_eq!(wrap(10, 5, 2), 2);
         assert_eq!(wrap(10, 10, 2), 10);
         assert_eq!(wrap(-2, 10, 2), 7);
+    }
+
+    // testing addition
+    #[test]
+    fn test_addition() {
+        let test1 = RangedWrapping(5, 10, 2);
+        let test2 = RangedWrapping(7, 10, 2);
+        let test3 = test1 + test2;
+        assert_eq!(test3.0, 3);
+    }
+
+    #[test]
+    fn test_addassign() {
+        let mut test1 = RangedWrapping(5, 10, 2);
+        test1 += RangedWrapping(7, 10, 2);
+        assert_eq!(test1.0, 3);
+    }
+
+    #[test]
+    fn test_addassign_struct() {
+        let mut test1 = TestStruct {
+            id: 0,
+            content: RangedWrapping(5, 10, 2),
+        };
+        test1.content += RangedWrapping(7, 10, 2);
+        assert_eq!(test1.content.0, 3);
     }
 }
