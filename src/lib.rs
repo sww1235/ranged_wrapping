@@ -41,6 +41,42 @@ use std::ops::{
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Hash)]
 pub struct ArbitraryWrapping<T, U>(T, U, U);
 
+//https://stackoverflow.com/a/14416133/3342767
+//
+//https://users.rust-lang.org/t/wrapping-a-number-around-a-designated-inclusive-range/116737/2?u=sww1235
+fn wrap<T, U>(input: T, max: U, min: U) -> T
+where
+    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<i32, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: Add<i32, Output = T>,
+{
+    if input <= max && input >= min {
+        return input;
+    }
+
+    let range_size = max - min + 1;
+
+    let mut temp = input;
+
+    if temp < min {
+        temp += range_size * ((Into::<T>::into(min) - temp) / range_size + 1);
+    }
+
+    Into::<T>::into(min) + (temp - min) % range_size
+}
+
 impl<T: fmt::Debug, U> fmt::Debug for ArbitraryWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
