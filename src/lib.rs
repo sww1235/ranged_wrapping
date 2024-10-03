@@ -113,27 +113,24 @@ impl<T: fmt::UpperHex, U> fmt::UpperHex for ArbitraryWrapping<T, U> {
     }
 }
 
-#[allow(dead_code)]
-//https://stackoverflow.com/a/14416133/3342767
-//
-//https://users.rust-lang.org/t/wrapping-a-number-around-a-designated-inclusive-range/116737/2?u=sww1235
-fn wrap<T, U>(input: T, max: U, min: U) -> T
+//TODO: need to make sure that the max/min values are the same on any of these operations
+impl<T, U> Add for ArbitraryWrapping<T, U>
 where
-    T: std::cmp::PartialOrd<T> + std::ops::AddAssign,
-    T: std::cmp::PartialOrd<U>,
+    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
-    T: std::ops::Sub<T, Output = T>,
-    T: std::ops::Sub<U, Output = T>,
-    T: std::ops::Add<i32, Output = T>,
-    T: std::ops::Add<T, Output = T>,
-    T: std::ops::Add<U, Output = T>,
-    T: std::ops::Mul<T, Output = T>,
-    T: std::ops::Div<T, Output = T>,
-    T: std::ops::Rem<T, Output = T>,
-    U: std::ops::Sub<U, Output = T>,
-    U: std::ops::Add<i32, Output = T>,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<i32, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: Add<i32, Output = T>,
 {
     if input <= max && input >= min {
         return input;
