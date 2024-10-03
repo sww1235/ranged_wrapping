@@ -39,7 +39,7 @@ use std::ops::{
 ///
 /// `Wrapping<T>` is guaranteed to have the same layout and ABI as `T`.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Hash)]
-pub struct RangedWrapping<T, U>(T, U, U);
+pub struct RangedWrapping<T, U>(pub T, pub U, pub U);
 
 //https://stackoverflow.com/a/14416133/3342767
 //
