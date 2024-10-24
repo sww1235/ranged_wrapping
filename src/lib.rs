@@ -7,6 +7,8 @@ use std::ops::{
     Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 
+use forward_ref_generic::{forward_ref_binop, forward_ref_op_assign};
+
 //TODO: fix this documenation
 /// Provides intentionally-wrapped arithmetic on `T`.
 ///
@@ -143,6 +145,29 @@ where
     }
 }
 
+forward_ref_binop! {
+    [T, U]
+    impl Add, add for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<i32, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: Add<i32, Output = T>,
+    U: PartialEq<U>,
+
+}
+
 impl<T, U> AddAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T> + AddAssign,
@@ -167,8 +192,31 @@ where
         if self.1 != other.1 || self.2 != other.2 {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self + RangedWrapping(other.0, self.1, self.2);
+        *self = RangedWrapping(wrap(self.0 + other.0, self.1, self.2), self.1, self.2);
+        //*self = *self + RangedWrapping(other.0, self.1, self.2);
     }
+}
+
+forward_ref_op_assign! {
+    [T, U]
+    impl AddAssign, add_assign for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<i32, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: Add<i32, Output = T>,
+    U: PartialEq<U>,
 }
 
 impl<T, U> Sub for RangedWrapping<T, U>

@@ -80,3 +80,6 @@ unwrap_in_result = "warn"
 unwrap_used = "warn"
 use_self = "warn"
 verbose_file_reads = "warn"
+
+[dependencies]
+forward_ref_generic = "0.2.1"
