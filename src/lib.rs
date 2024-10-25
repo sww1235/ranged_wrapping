@@ -8,6 +8,7 @@ use std::ops::{
 };
 
 use forward_ref_generic::{forward_ref_binop, forward_ref_op_assign};
+use num_traits::identities::{One, Zero};
 
 //TODO: fix this documenation
 /// Provides intentionally-wrapped arithmetic on `T`.
@@ -46,6 +47,8 @@ pub struct RangedWrapping<T, U>(pub T, pub U, pub U);
 //https://stackoverflow.com/a/14416133/3342767
 //
 //https://users.rust-lang.org/t/wrapping-a-number-around-a-designated-inclusive-range/116737/2?u=sww1235
+//
+//https://users.rust-lang.org/t/confusion-on-implementing-add-assign-on-struct/120173/2
 fn wrap<T, U>(input: T, max: U, min: U) -> T
 where
     T: PartialOrd<T> + AddAssign,
@@ -55,25 +58,24 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
+    T: One,
 {
     if input <= max && input >= min {
         return input;
     }
 
-    let range_size = max - min + 1;
+    let range_size = max - min + T::one();
 
     let mut temp = input;
 
     if temp < min {
-        temp += range_size * ((Into::<T>::into(min) - temp) / range_size + 1);
+        temp += range_size * ((Into::<T>::into(min) - temp) / range_size + T::one());
     }
 
     Into::<T>::into(min) + (temp - min) % range_size
@@ -124,15 +126,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     type Output = RangedWrapping<T, U>;
 
@@ -156,15 +157,14 @@ forward_ref_binop! {
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 
 }
 
@@ -177,15 +177,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     #[inline]
     fn add_assign(&mut self, other: Self) {
@@ -193,7 +192,6 @@ where
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
         *self = RangedWrapping(wrap(self.0 + other.0, self.1, self.2), self.1, self.2);
-        //*self = *self + RangedWrapping(other.0, self.1, self.2);
     }
 }
 
@@ -208,15 +206,14 @@ forward_ref_op_assign! {
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 }
 
 impl<T, U> Sub for RangedWrapping<T, U>
@@ -228,15 +225,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     type Output = RangedWrapping<T, U>;
 
@@ -257,15 +253,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     #[inline]
     fn sub_assign(&mut self, other: Self) {
@@ -285,15 +280,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     type Output = RangedWrapping<T, U>;
 
@@ -315,15 +309,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     #[inline]
     fn mul_assign(&mut self, other: Self) {
@@ -343,15 +336,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     type Output = RangedWrapping<T, U>;
 
@@ -373,15 +365,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     #[inline]
     fn div_assign(&mut self, other: Self) {
@@ -401,15 +392,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     type Output = RangedWrapping<T, U>;
 
@@ -431,15 +421,14 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     #[inline]
     fn rem_assign(&mut self, other: Self) {
@@ -459,7 +448,6 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
@@ -467,7 +455,6 @@ where
     T: Rem<T, Output = T>,
     T: Not<Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
 {
     type Output = RangedWrapping<T, U>;
 
@@ -486,7 +473,6 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
@@ -494,8 +480,8 @@ where
     T: Rem<T, Output = T>,
     T: BitXor<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     type Output = RangedWrapping<T, U>;
 
@@ -517,7 +503,6 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
@@ -525,8 +510,8 @@ where
     T: Rem<T, Output = T>,
     T: BitXor<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     #[inline]
     fn bitxor_assign(&mut self, other: Self) {
@@ -546,7 +531,6 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
@@ -554,8 +538,8 @@ where
     T: Rem<T, Output = T>,
     T: BitOr<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     type Output = RangedWrapping<T, U>;
 
@@ -577,7 +561,6 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
@@ -585,8 +568,8 @@ where
     T: Rem<T, Output = T>,
     T: BitOr<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     #[inline]
     fn bitor_assign(&mut self, other: Self) {
@@ -606,7 +589,6 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
@@ -614,8 +596,8 @@ where
     T: Rem<T, Output = T>,
     T: BitAnd<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     type Output = RangedWrapping<T, U>;
 
@@ -637,7 +619,6 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
@@ -645,8 +626,8 @@ where
     T: Rem<T, Output = T>,
     T: BitAnd<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
     U: PartialEq<U>,
+    T: One,
 {
     #[inline]
     //TODO: need to make sure this actually wraps properly
@@ -667,21 +648,19 @@ where
     U: std::marker::Copy,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
-    T: Add<i32, Output = T>,
     T: Add<T, Output = T>,
     T: Add<U, Output = T>,
     T: Mul<T, Output = T>,
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     U: Sub<U, Output = T>,
-    U: Add<i32, Output = T>,
-    i32: Sub<T, Output = T>,
+    T: Zero,
 {
     type Output = Self;
     #[inline]
     //TODO: panic if negation would be less than lower bound
     fn neg(self) -> Self {
-        let temp = 0i32 - self.0;
+        let temp = T::zero() - self.0;
         if temp < self.2 {
             panic!("negative value is out of wrapped bounds");
         }
