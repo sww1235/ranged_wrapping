@@ -10,37 +10,53 @@ use std::ops::{
 use forward_ref_generic::{forward_ref_binop, forward_ref_op_assign};
 use num_traits::identities::{One, Zero};
 
-//TODO: fix this documenation
-/// Provides intentionally-wrapped arithmetic on `T`.
+/// Provides intentionally-wrapped arithmetic on `T` within a defined range.
 ///
-/// Operations like `+` on `u32` values are intended to never overflow,
-/// and in some debug configurations overflow is detected and results
-/// in a panic. While most arithmetic falls into this category, some
-/// code explicitly expects and relies upon modular arithmetic (e.g.,
-/// hashing).
+/// This type builds on [`std::num::Wrapping<T>`] by allowing you to specify a maximum and minimum
+/// range to wrap the value around. This is useful in most places you would traditionally use
+/// modular arithmatic to wrap a value around a range that is smaller than your datatype width.
 ///
-/// Wrapping arithmetic can be achieved either through methods like
-/// `wrapping_add`, or through the `Wrapping<T>` type, which says that
-/// all standard arithmetic operations on the underlying value are
-/// intended to have wrapping semantics.
+/// The maximum and minimum values are both inclusive.
 ///
-/// The underlying value can be retrieved through the `.0` index of the
-/// `Wrapping` tuple.
+/// All standard math operations defined on [`std::num::Wrapping<T>`] are also defined on
+/// `RangedWrapping<T, U>.
+///
+/// The underlying value can be retrieved through `.value`.
+///
+/// The `max` and `min` bounds can be assigned to a different type than the `value` if you ever
+/// needed to optimize things that much. In most cases, you should use the same datatype for all
+/// values. Bounds are checked so you can't do anything too stupid with types.
+///
+/// Speaking of types, a RangedWrapping instance with different max or min values are considered
+/// different types and prevented from being mathed together. Unfortunately Rust doesn't have
+/// dependant or refinement types (which would technically eliminate the need for this entire
+/// library) so this must be done at run time with panics.
 ///
 /// # Examples
 ///
+/// See tests for more examples
+///
 /// ```
-/// use std::num::Wrapping;
+/// use ranged_wrapping::RangedWrapping;
 ///
-/// let zero = Wrapping(0u32);
-/// let one = Wrapping(1u32);
-///
-/// assert_eq!(u32::MAX, (zero - one).0);
+/// let test1 = RangedWrapping {
+///    value: 5,
+///    max: 10,
+///    min: 2,
+/// };
+/// let test2 = RangedWrapping {
+///    value: 7,
+///    max: 10,
+///    min: 2,
+/// };
+/// let test3 = test1 + test2;
+/// assert_eq!(test3.0, 3);
 /// ```
 ///
-/// # Layout
+/// # Panics
 ///
-/// `Wrapping<T>` is guaranteed to have the same layout and ABI as `T`.
+/// Any math operation on two instances of `RangedWrapping` will panic where the max or min values
+/// are not equal.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Hash)]
 pub struct RangedWrapping<T, U> {
     pub value: T,
@@ -1035,7 +1051,7 @@ mod tests {
             min: 2,
         };
         let test3 = test1 + test2;
-        assert_eq!(test3.0, 3);
+        assert_eq!(test3.value, 3);
     }
 
     #[test]
@@ -1050,7 +1066,7 @@ mod tests {
             max: 10,
             min: 2,
         };
-        assert_eq!(test1.0, 3);
+        assert_eq!(test1.value, 3);
     }
 
     #[test]
@@ -1068,6 +1084,6 @@ mod tests {
             max: 10,
             min: 2,
         };
-        assert_eq!(test1.content.0, 3);
+        assert_eq!(test1.content.value, 3);
     }
 }
