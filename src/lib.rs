@@ -42,7 +42,11 @@ use num_traits::identities::{One, Zero};
 ///
 /// `Wrapping<T>` is guaranteed to have the same layout and ABI as `T`.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Hash)]
-pub struct RangedWrapping<T, U>(pub T, pub U, pub U);
+pub struct RangedWrapping<T, U> {
+    pub value: T,
+    pub max: U,
+    pub min: U,
+}
 
 //https://stackoverflow.com/a/14416133/3342767
 //
@@ -80,40 +84,34 @@ where
 
     Into::<T>::into(min) + (temp - min) % range_size
 }
-
+//TODO: fix debug implementation
 impl<T: fmt::Debug, U> fmt::Debug for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl<T: fmt::Display, U> fmt::Display for RangedWrapping<T, U> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        self.value.fmt(f)
     }
 }
 
 impl<T: fmt::Binary, U> fmt::Binary for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        self.value.fmt(f)
     }
 }
 
 impl<T: fmt::Octal, U> fmt::Octal for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        self.value.fmt(f)
     }
 }
 
 impl<T: fmt::LowerHex, U> fmt::LowerHex for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        self.value.fmt(f)
     }
 }
 
 impl<T: fmt::UpperHex, U> fmt::UpperHex for RangedWrapping<T, U> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        self.value.fmt(f)
     }
 }
 
@@ -139,10 +137,14 @@ where
 
     #[inline]
     fn add(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
-        if self.1 != other.1 || self.2 != other.2 {
-            panic!("self and other values of RangedWrapping do not have the same bounds")
+        if self.max != other.max || self.min != other.min {
+            panic!("self and other values of RangedWrapping do not have the same bounds when adding")
         }
-        RangedWrapping(wrap(self.0 + other.0, self.1, self.2), self.1, self.2)
+        RangedWrapping {
+            value: wrap(self.value + other.value, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 
@@ -188,10 +190,14 @@ where
 {
     #[inline]
     fn add_assign(&mut self, other: Self) {
-        if self.1 != other.1 || self.2 != other.2 {
-            panic!("self and other values of RangedWrapping do not have the same bounds")
+        if self.max != other.max || self.min != other.min {
+            panic!("self and other values of RangedWrapping do not have the same bounds when add_assign")
         }
-        *self = RangedWrapping(wrap(self.0 + other.0, self.1, self.2), self.1, self.2);
+        *self = RangedWrapping {
+            value: wrap(self.value + other.value, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        };
     }
 }
 
@@ -238,10 +244,14 @@ where
 
     #[inline]
     fn sub(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping(wrap(self.0 - other.0, self.1, self.2), self.1, self.2)
+        RangedWrapping {
+            value: wrap(self.value - other.value, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 impl<T, U> SubAssign for RangedWrapping<T, U>
@@ -264,10 +274,15 @@ where
 {
     #[inline]
     fn sub_assign(&mut self, other: Self) {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self - RangedWrapping(other.0, self.1, self.2);
+        *self = *self
+            - RangedWrapping {
+                value: other.value,
+                max: self.max,
+                min: self.min,
+            };
     }
 }
 
@@ -293,10 +308,14 @@ where
 
     #[inline]
     fn mul(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping(wrap(self.0 * other.0, self.1, self.2), self.1, self.2)
+        RangedWrapping {
+            value: wrap(self.value * other.value, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 
@@ -320,10 +339,15 @@ where
 {
     #[inline]
     fn mul_assign(&mut self, other: Self) {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self * RangedWrapping(other.0, self.1, self.2);
+        *self = *self
+            * RangedWrapping {
+                value: other.value,
+                max: self.max,
+                min: self.min,
+            };
     }
 }
 
@@ -349,10 +373,14 @@ where
 
     #[inline]
     fn div(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping(wrap(self.0 / other.0, self.1, self.2), self.1, self.2)
+        RangedWrapping {
+            value: wrap(self.value / other.value, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 
@@ -376,10 +404,15 @@ where
 {
     #[inline]
     fn div_assign(&mut self, other: Self) {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self / RangedWrapping(other.0, self.1, self.2);
+        *self = *self
+            / RangedWrapping {
+                value: other.value,
+                max: self.max,
+                min: self.min,
+            };
     }
 }
 
@@ -405,10 +438,14 @@ where
 
     #[inline]
     fn rem(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping(wrap(self.0 % other.0, self.1, self.2), self.1, self.2)
+        RangedWrapping {
+            value: wrap(self.value % other.value, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 
@@ -432,10 +469,15 @@ where
 {
     #[inline]
     fn rem_assign(&mut self, other: Self) {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self % RangedWrapping(other.0, self.1, self.2);
+        *self = *self
+            % RangedWrapping {
+                value: other.value,
+                max: self.max,
+                min: self.min,
+            };
     }
 }
 
@@ -460,7 +502,11 @@ where
 
     #[inline]
     fn not(self) -> RangedWrapping<T, U> {
-        RangedWrapping(!self.0, self.1, self.2)
+        RangedWrapping {
+            value: !self.value,
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 
@@ -487,10 +533,14 @@ where
 
     #[inline]
     fn bitxor(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping(wrap(self.0 ^ other.0, self.1, self.2), self.1, self.2)
+        RangedWrapping {
+            value: wrap(self.value ^ other.value, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 
@@ -515,10 +565,15 @@ where
 {
     #[inline]
     fn bitxor_assign(&mut self, other: Self) {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self ^ RangedWrapping(other.0, self.1, self.2);
+        *self = *self
+            ^ RangedWrapping {
+                value: other.value,
+                max: self.max,
+                min: self.min,
+            };
     }
 }
 
@@ -545,10 +600,14 @@ where
 
     #[inline]
     fn bitor(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping(wrap(self.0 | other.0, self.1, self.2), self.1, self.2)
+        RangedWrapping {
+            value: wrap(self.value | other.value, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 
@@ -573,10 +632,15 @@ where
 {
     #[inline]
     fn bitor_assign(&mut self, other: Self) {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self | RangedWrapping(other.0, self.1, self.2);
+        *self = *self
+            | RangedWrapping {
+                value: other.value,
+                max: self.max,
+                min: self.min,
+            };
     }
 }
 
@@ -603,10 +667,14 @@ where
 
     #[inline]
     fn bitand(self, other: RangedWrapping<T, U>) -> RangedWrapping<T, U> {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping(wrap(self.0 & other.0, self.1, self.2), self.1, self.2)
+        RangedWrapping {
+            value: wrap(self.value & other.value, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 
@@ -632,10 +700,15 @@ where
     #[inline]
     //TODO: need to make sure this actually wraps properly
     fn bitand_assign(&mut self, other: Self) {
-        if self.1 != other.1 || self.2 != other.2 {
+        if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self & RangedWrapping(other.0, self.1, self.2);
+        *self = *self
+            & RangedWrapping {
+                value: other.value,
+                max: self.max,
+                min: self.min,
+            };
     }
 }
 
@@ -660,11 +733,15 @@ where
     #[inline]
     //TODO: panic if negation would be less than lower bound
     fn neg(self) -> Self {
-        let temp = T::zero() - self.0;
-        if temp < self.2 {
+        let temp = T::zero() - self.value;
+        if temp < self.min {
             panic!("negative value is out of wrapped bounds");
         }
-        RangedWrapping(temp, self.1, self.2)
+        RangedWrapping {
+            value: temp,
+            max: self.max,
+            min: self.min,
+        }
     }
 }
 
@@ -672,11 +749,11 @@ where
 impl<T, U> RangedWrapping<T, U> {
     //    /// Returns the smallest value that can be represented by this type.
     //    ///
-    //    //pub const MIN: U = self.1;
+    //    //pub const MIN: U = self.min;
     //
     //    /// Returns the largest value that can be represented by this type.
     //    ///
-    //    //pub const MAX: U = self.2;
+    //    //pub const MAX: U = self.max;
     //            /// Computes the absolute value of `self`, wrapping around at
     //            /// the boundary of the type.
     //            ///
@@ -702,7 +779,7 @@ impl<T, U> RangedWrapping<T, U> {
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub fn abs(self) -> RangedWrapping<T, U> {
-    //                RangedWrapping(self.0.wrapping_abs())
+    //                RangedWrapping{self.value.wrapping_abs()}
     //            }
     //
     //            /// Returns a number representing sign of `self`.
@@ -728,7 +805,7 @@ impl<T, U> RangedWrapping<T, U> {
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub fn signum(self) -> RangedWrapping<T, U> {
-    //                RangedWrapping(self.0.signum())
+    //                RangedWrapping{self.value.signum()}
     //            }
     //
     //            /// Returns `true` if `self` is positive and `false` if the number is zero or
@@ -749,7 +826,7 @@ impl<T, U> RangedWrapping<T, U> {
     //            #[inline]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub const fn is_positive(self) -> bool {
-    //                self.0.is_positive()
+    //                self.value.is_positive()
     //            }
     //
     //            /// Returns `true` if `self` is negative and `false` if the number is zero or
@@ -770,7 +847,7 @@ impl<T, U> RangedWrapping<T, U> {
     //            #[inline]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub const fn is_negative(self) -> bool {
-    //                self.0.is_negative()
+    //                self.value.is_negative()
     //            }
 
     //
@@ -799,7 +876,7 @@ impl<T, U> RangedWrapping<T, U> {
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub const fn rotate_left(self, n: u32) -> Self {
-    //                RangedWrapping(self.0.rotate_left(n))
+    //                RangedWrapping{self.value.rotate_left(n)}
     //            }
     //
     //            /// Shifts the bits to the right by a specified amount, `n`,
@@ -827,7 +904,7 @@ impl<T, U> RangedWrapping<T, U> {
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub const fn rotate_right(self, n: u32) -> Self {
-    //                RangedWrapping(self.0.rotate_right(n))
+    //                RangedWrapping{self.value.rotate_right(n)}
     //            }
     //
     //            /// Reverses the byte order of the integer.
@@ -853,7 +930,7 @@ impl<T, U> RangedWrapping<T, U> {
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub const fn swap_bytes(self) -> Self {
-    //                RangedWrapping(self.0.swap_bytes())
+    //                RangedWrapping{self.value.swap_bytes()}
     //            }
     //
     //            /// Reverses the bit pattern of the integer.
@@ -882,7 +959,7 @@ impl<T, U> RangedWrapping<T, U> {
     //                          without modifying the original"]
     //            #[inline]
     //            pub const fn reverse_bits(self) -> Self {
-    //                RangedWrapping(self.0.reverse_bits())
+    //                RangedWrapping{self.value.reverse_bits()}
     //            }
     //
     //            /// Raises self to the power of `exp`, using exponentiation by squaring.
@@ -937,16 +1014,32 @@ mod tests {
     // testing addition
     #[test]
     fn test_addition() {
-        let test1 = RangedWrapping(5, 10, 2);
-        let test2 = RangedWrapping(7, 10, 2);
+        let test1 = RangedWrapping {
+            value: 5,
+            max: 10,
+            min: 2,
+        };
+        let test2 = RangedWrapping {
+            value: 7,
+            max: 10,
+            min: 2,
+        };
         let test3 = test1 + test2;
         assert_eq!(test3.0, 3);
     }
 
     #[test]
     fn test_addassign() {
-        let mut test1 = RangedWrapping(5, 10, 2);
-        test1 += RangedWrapping(7, 10, 2);
+        let mut test1 = RangedWrapping {
+            value: 5,
+            max: 10,
+            min: 2,
+        };
+        test1 += RangedWrapping {
+            value: 7,
+            max: 10,
+            min: 2,
+        };
         assert_eq!(test1.0, 3);
     }
 
@@ -954,9 +1047,17 @@ mod tests {
     fn test_addassign_struct() {
         let mut test1 = TestStruct {
             id: 0,
-            content: RangedWrapping(5, 10, 2),
+            content: RangedWrapping {
+                value: 5,
+                max: 10,
+                min: 2,
+            },
         };
-        test1.content += RangedWrapping(7, 10, 2);
+        test1.content += RangedWrapping {
+            value: 7,
+            max: 10,
+            min: 2,
+        };
         assert_eq!(test1.content.0, 3);
     }
 }
