@@ -1,7 +1,7 @@
 //! Definitions of `RangedWrapping<T, U>`.
 
 use std::cmp::{PartialEq, PartialOrd};
-use std::fmt;
+use std::fmt::{self, Display};
 use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign, Neg, Not,
     Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
@@ -981,16 +981,26 @@ impl<T, U> RangedWrapping<T, U> {
     //            /// #![feature(wrapping_int_impl)]
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// assert_eq!(RangedWrapping(3i8).pow(5), RangedWrapping(-13));
-    //            /// assert_eq!(RangedWrapping(3i8).pow(6), RangedWrapping(-39));
+    //            /// assert_eq!(RangedWrapping{3i8).pow(5), RangedWrapping(-13)};
+    //            /// assert_eq!(RangedWrapping{3i8).pow(6), RangedWrapping(-39)};
     //            /// ```
     //            #[inline]
     //            #[must_use = "this returns the result of the operation, \
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
     //            pub fn pow(self, exp: u32) -> Self {
-    //                RangedWrapping(self.0.wrapping_pow(exp))
+    //                RangedWrapping{self.value.wrapping_pow(exp)}
     //            }
+}
+
+impl<T, U> Display for RangedWrapping<T, U>
+where
+    T: Display,
+    U: Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Value: {}, Max: {}, Min: {}", self.value, self.max, self.min)
+    }
 }
 
 #[cfg(test)]
