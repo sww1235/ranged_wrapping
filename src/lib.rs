@@ -168,7 +168,7 @@ forward_ref_binop! {
     [T, U]
     impl Add, add for RangedWrapping<T, U>
     where
-    T: PartialOrd<T> ,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -221,7 +221,7 @@ forward_ref_op_assign! {
     [T, U]
     impl AddAssign, add_assign for RangedWrapping<T, U>
     where
-    T: PartialOrd<T> ,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -270,6 +270,29 @@ where
         }
     }
 }
+
+forward_ref_binop! {
+    [T, U]
+    impl Sub, sub for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T>,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: PartialEq<U>,
+    T: One,
+
+}
+
 impl<T, U> SubAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
@@ -302,6 +325,26 @@ where
     }
 }
 
+forward_ref_op_assign! {
+    [T, U]
+    impl SubAssign, sub_assign for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T>,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: PartialEq<U>,
+    T: One,
+}
 impl<T, U> Mul for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
@@ -335,6 +378,27 @@ where
     }
 }
 
+forward_ref_binop! {
+    [T, U]
+    impl Mul, mul for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T>,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: PartialEq<U>,
+    T: One,
+
+}
 impl<T, U> MulAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
@@ -367,6 +431,26 @@ where
     }
 }
 
+forward_ref_op_assign! {
+    [T, U]
+    impl MulAssign, mul_assign for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T>,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: PartialEq<U>,
+    T: One,
+}
 impl<T, U> Div for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
@@ -400,6 +484,27 @@ where
     }
 }
 
+forward_ref_binop! {
+    [T, U]
+    impl Div, div for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T>,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: PartialEq<U>,
+    T: One,
+
+}
 impl<T, U> DivAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
@@ -432,6 +537,26 @@ where
     }
 }
 
+forward_ref_op_assign! {
+    [T, U]
+    impl DivAssign, div_assign for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T>,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: PartialEq<U>,
+    T: One,
+}
 impl<T, U> Rem for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
@@ -465,6 +590,27 @@ where
     }
 }
 
+forward_ref_binop! {
+    [T, U]
+    impl Rem, rem for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T>,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: PartialEq<U>,
+    T: One,
+
+}
 impl<T, U> RemAssign for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
@@ -497,6 +643,26 @@ where
     }
 }
 
+forward_ref_op_assign! {
+    [T, U]
+    impl RemAssign, rem_assign for RangedWrapping<T, U>
+    where
+    T: PartialOrd<T>,
+    T: PartialOrd<U>,
+    T: From<U>,
+    T: std::marker::Copy,
+    U: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Sub<U, Output = T>,
+    T: Add<T, Output = T>,
+    T: Add<U, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    U: Sub<U, Output = T>,
+    U: PartialEq<U>,
+    T: One,
+}
 impl<T, U> Not for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
