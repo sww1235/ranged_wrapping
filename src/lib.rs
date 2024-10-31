@@ -18,7 +18,7 @@ use num_traits::identities::{One, Zero};
 ///
 /// The maximum and minimum values are both inclusive.
 ///
-/// All standard math operations defined on [`std::num::Wrapping<T>`] are also defined on
+/// All standard stable math operations defined on [`std::num::Wrapping<T>`] are also defined on
 /// `RangedWrapping<T, U>.
 ///
 /// The underlying value can be retrieved through `.value`.
@@ -50,7 +50,7 @@ use num_traits::identities::{One, Zero};
 ///    min: 2,
 /// };
 /// let test3 = test1 + test2;
-/// assert_eq!(test3.0, 3);
+/// assert_eq!(test3.value, 3);
 /// ```
 ///
 /// # Panics
