@@ -71,7 +71,7 @@ pub struct RangedWrapping<T, U> {
 //https://users.rust-lang.org/t/confusion-on-implementing-add-assign-on-struct/120173/2
 fn wrap<T, U>(input: T, max: U, min: U) -> T
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -95,7 +95,7 @@ where
     let mut temp = input;
 
     if temp < min {
-        temp += range_size * ((Into::<T>::into(min) - temp) / range_size + T::one());
+        temp = temp + range_size * ((Into::<T>::into(min) - temp) / range_size + T::one());
     }
 
     Into::<T>::into(min) + (temp - min) % range_size
@@ -133,7 +133,7 @@ impl<T: fmt::UpperHex, U> fmt::UpperHex for RangedWrapping<T, U> {
 
 impl<T, U> Add for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -168,7 +168,7 @@ forward_ref_binop! {
     [T, U]
     impl Add, add for RangedWrapping<T, U>
     where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T> ,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -188,7 +188,7 @@ forward_ref_binop! {
 
 impl<T, U> AddAssign for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -221,7 +221,7 @@ forward_ref_op_assign! {
     [T, U]
     impl AddAssign, add_assign for RangedWrapping<T, U>
     where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T> ,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -240,7 +240,7 @@ forward_ref_op_assign! {
 
 impl<T, U> Sub for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -272,7 +272,7 @@ where
 }
 impl<T, U> SubAssign for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -304,7 +304,7 @@ where
 
 impl<T, U> Mul for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -337,7 +337,7 @@ where
 
 impl<T, U> MulAssign for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -369,7 +369,7 @@ where
 
 impl<T, U> Div for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -402,7 +402,7 @@ where
 
 impl<T, U> DivAssign for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -434,7 +434,7 @@ where
 
 impl<T, U> Rem for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -467,7 +467,7 @@ where
 
 impl<T, U> RemAssign for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -499,7 +499,7 @@ where
 
 impl<T, U> Not for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -528,7 +528,7 @@ where
 
 impl<T, U> BitXor for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -562,7 +562,7 @@ where
 
 impl<T, U> BitXorAssign for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -595,7 +595,7 @@ where
 
 impl<T, U> BitOr for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -629,7 +629,7 @@ where
 
 impl<T, U> BitOrAssign for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -662,7 +662,7 @@ where
 
 impl<T, U> BitAnd for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -696,7 +696,7 @@ where
 
 impl<T, U> BitAndAssign for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
@@ -730,7 +730,7 @@ where
 
 impl<T, U> Neg for RangedWrapping<T, U>
 where
-    T: PartialOrd<T> + AddAssign,
+    T: PartialOrd<T>,
     T: PartialOrd<U>,
     T: From<U>,
     T: std::marker::Copy,
