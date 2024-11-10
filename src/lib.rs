@@ -8,7 +8,11 @@ use std::ops::{
 };
 
 use forward_ref_generic::{forward_ref_binop, forward_ref_op_assign};
-use num_traits::identities::{One, Zero};
+use num_traits::{
+    bounds::Bounded,
+    identities::{One, Zero},
+    ops::checked::{CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedShl, CheckedShr, CheckedSub},
+};
 
 /// Provides intentionally-wrapped arithmetic on `T` within a defined range.
 ///
@@ -138,6 +142,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedAdd,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -156,10 +162,19 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds when adding")
         }
-        RangedWrapping {
-            value: wrap(self.value + other.value, self.max, self.min),
-            max: self.max,
-            min: self.min,
+        if let Some(value) = self.value.checked_add(&other.value) {
+            RangedWrapping {
+                value: wrap(value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value + other.value is greater than T::MAX, so wrap around to T:MIN value
+        } else {
+            RangedWrapping {
+                value: wrap(T::min_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
         }
     }
 }
@@ -173,6 +188,8 @@ forward_ref_binop! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedAdd,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -193,6 +210,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedAdd,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -226,6 +245,8 @@ forward_ref_op_assign! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedAdd,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -245,6 +266,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedSub,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -263,10 +286,19 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping {
-            value: wrap(self.value - other.value, self.max, self.min),
-            max: self.max,
-            min: self.min,
+        if let Some(value) = self.value.checked_sub(&other.value) {
+            RangedWrapping {
+                value: wrap(value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value - other.value is less than T::MIN, so wrap around to T:MAX value
+        } else {
+            RangedWrapping {
+                value: wrap(T::max_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
         }
     }
 }
@@ -280,6 +312,8 @@ forward_ref_binop! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedSub,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -300,6 +334,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedSub,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -334,6 +370,8 @@ forward_ref_op_assign! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedSub,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -345,6 +383,7 @@ forward_ref_op_assign! {
     U: PartialEq<U>,
     T: One,
 }
+
 impl<T, U> Mul for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
@@ -352,6 +391,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedMul,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -370,10 +411,19 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping {
-            value: wrap(self.value * other.value, self.max, self.min),
-            max: self.max,
-            min: self.min,
+        if let Some(value) = self.value.checked_mul(&other.value) {
+            RangedWrapping {
+                value: wrap(value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value * other.value is greater than T::MAX, so wrap around to T:MIN value
+        } else {
+            RangedWrapping {
+                value: wrap(T::min_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
         }
     }
 }
@@ -387,6 +437,8 @@ forward_ref_binop! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedMul,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -406,6 +458,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedMul,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -440,6 +494,8 @@ forward_ref_op_assign! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedMul,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -451,6 +507,7 @@ forward_ref_op_assign! {
     U: PartialEq<U>,
     T: One,
 }
+
 impl<T, U> Div for RangedWrapping<T, U>
 where
     T: PartialOrd<T>,
@@ -458,6 +515,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedDiv,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -476,10 +535,19 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping {
-            value: wrap(self.value / other.value, self.max, self.min),
-            max: self.max,
-            min: self.min,
+        if let Some(value) = self.value.checked_div(&other.value) {
+            RangedWrapping {
+                value: wrap(value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value / other.value is less than T::MIN, so wrap around to T:MAX value
+        } else {
+            RangedWrapping {
+                value: wrap(T::max_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
         }
     }
 }
@@ -493,6 +561,8 @@ forward_ref_binop! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedDiv,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -512,6 +582,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedDiv,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -546,6 +618,8 @@ forward_ref_op_assign! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedDiv,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -564,6 +638,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedRem,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -582,10 +658,19 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping {
-            value: wrap(self.value % other.value, self.max, self.min),
-            max: self.max,
-            min: self.min,
+        if let Some(value) = self.value.checked_rem(&other.value) {
+            RangedWrapping {
+                value: wrap(value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value % other.value is less than T::MIN, so wrap around to T:MAX value
+        } else {
+            RangedWrapping {
+                value: wrap(T::max_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
         }
     }
 }
@@ -599,6 +684,8 @@ forward_ref_binop! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedRem,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -618,6 +705,8 @@ where
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedRem,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
@@ -652,6 +741,8 @@ forward_ref_op_assign! {
     T: From<U>,
     T: std::marker::Copy,
     U: std::marker::Copy,
+    T: CheckedRem,
+    T: Bounded,
     T: Sub<T, Output = T>,
     T: Sub<U, Output = T>,
     T: Add<T, Output = T>,
