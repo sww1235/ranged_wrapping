@@ -2,17 +2,21 @@
 
 use std::cmp::{PartialEq, PartialOrd};
 use std::fmt::{self, Display};
+#[expect(unused_imports)]
 use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign, Neg, Not,
     Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 
-use forward_ref_generic::{forward_ref_binop, forward_ref_op_assign};
+use forward_ref_generic::{forward_ref_binop, forward_ref_op_assign, forward_ref_unop};
+#[expect(unused_imports)]
 use num_traits::{
     bounds::Bounded,
     identities::{One, Zero},
     ops::checked::{CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedShl, CheckedShr, CheckedSub},
 };
+
+//TODO: use num_traits to implement math against primative types
 
 /// Provides intentionally-wrapped arithmetic on `T` within a defined range.
 ///
@@ -57,7 +61,9 @@ use num_traits::{
 ///
 /// Any math operation on two instances of `RangedWrapping` will panic where the max or min values
 /// are not equal.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Hash)]
+
+//TODO: experiement with const max/min
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Hash)]
 pub struct RangedWrapping<T> {
     pub value: T,
     pub max: T,
@@ -96,12 +102,6 @@ where
 
     Into::<T>::into(min) + (temp - min) % range_size
 }
-//TODO: fix debug implementation
-impl<T: fmt::Debug> fmt::Debug for RangedWrapping<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.value.fmt(f)
-    }
-}
 
 impl<T: fmt::Binary> fmt::Binary for RangedWrapping<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -127,7 +127,9 @@ impl<T: fmt::UpperHex> fmt::UpperHex for RangedWrapping<T> {
     }
 }
 
-impl<T> Add for RangedWrapping<T>
+//TODO: impl num_traits::bounded
+
+impl<T> Add<RangedWrapping<T>> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -143,19 +145,19 @@ where
     type Output = Self;
 
     #[inline]
-    fn add(self, other: RangedWrapping<T>) -> RangedWrapping<T> {
+    fn add(self, other: Self) -> Self {
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds when adding")
         }
-        if let Some(value) = self.value.checked_add(&other.value) {
-            RangedWrapping {
-                value: wrap(value, self.max, self.min),
+        if let Some(checked_value) = self.value.checked_add(&other.value) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
                 max: self.max,
                 min: self.min,
             }
             // self.value + other.value is greater than T::MAX, so wrap around to T:MIN value
         } else {
-            RangedWrapping {
+            Self {
                 value: wrap(T::min_value(), self.max, self.min),
                 max: self.max,
                 min: self.min,
@@ -166,7 +168,7 @@ where
 
 forward_ref_binop! {
     [T]
-    impl Add, add for RangedWrapping<T>
+    impl Add, add for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -178,10 +180,59 @@ forward_ref_binop! {
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     T: One,
-
 }
 
-impl<T> AddAssign for RangedWrapping<T>
+impl<T> Add<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedAdd,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    type Output = Self;
+
+    #[inline]
+    fn add(self, other: T) -> Self {
+        if let Some(checked_value) = self.value.checked_add(&other) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value + other.value is greater than T::MAX, so wrap around to T:MIN value
+        } else {
+            Self {
+                value: wrap(T::min_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+        }
+    }
+}
+
+forward_ref_binop! {
+    [T]
+    impl Add, add for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedAdd,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
+impl<T> AddAssign<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -199,17 +250,12 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds when add_assign")
         }
-        *self = RangedWrapping {
-            value: wrap(self.value + other.value, self.max, self.min),
-            max: self.max,
-            min: self.min,
-        };
+        *self = *self + other;
     }
 }
-
 forward_ref_op_assign! {
     [T]
-    impl AddAssign, add_assign for RangedWrapping<T>
+    impl AddAssign, add_assign for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -223,7 +269,42 @@ forward_ref_op_assign! {
     T: One,
 }
 
-impl<T> Sub for RangedWrapping<T>
+impl<T> AddAssign<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedAdd,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    #[inline]
+    fn add_assign(&mut self, other: T) {
+        *self = *self + other;
+    }
+}
+
+forward_ref_op_assign! {
+    [T]
+    impl AddAssign, add_assign for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedAdd,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
+impl<T> Sub<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -239,19 +320,19 @@ where
     type Output = Self;
 
     #[inline]
-    fn sub(self, other: RangedWrapping<T>) -> RangedWrapping<T> {
+    fn sub(self, other: Self) -> Self {
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        if let Some(value) = self.value.checked_sub(&other.value) {
-            RangedWrapping {
-                value: wrap(value, self.max, self.min),
+        if let Some(checked_value) = self.value.checked_sub(&other.value) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
                 max: self.max,
                 min: self.min,
             }
             // self.value - other.value is less than T::MIN, so wrap around to T:MAX value
         } else {
-            RangedWrapping {
+            Self {
                 value: wrap(T::max_value(), self.max, self.min),
                 max: self.max,
                 min: self.min,
@@ -262,7 +343,7 @@ where
 
 forward_ref_binop! {
     [T]
-    impl Sub, sub for RangedWrapping<T>
+    impl Sub, sub for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -274,10 +355,59 @@ forward_ref_binop! {
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     T: One,
-
 }
 
-impl<T> SubAssign for RangedWrapping<T>
+impl<T> Sub<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedSub,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, other: T) -> Self {
+        if let Some(checked_value) = self.value.checked_sub(&other) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value - other is less than T::MIN, so wrap around to T:MAX value
+        } else {
+            Self {
+                value: wrap(T::max_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+        }
+    }
+}
+
+forward_ref_binop! {
+    [T]
+    impl Sub, sub for RangedWrapping<T>,T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedSub,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
+impl<T> SubAssign<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -295,18 +425,13 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self
-            - RangedWrapping {
-                value: other.value,
-                max: self.max,
-                min: self.min,
-            };
+        *self = *self - other;
     }
 }
 
 forward_ref_op_assign! {
     [T]
-    impl SubAssign, sub_assign for RangedWrapping<T>
+    impl SubAssign, sub_assign for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -320,7 +445,42 @@ forward_ref_op_assign! {
     T: One,
 }
 
-impl<T> Mul for RangedWrapping<T>
+impl<T> SubAssign<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedSub,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    #[inline]
+    fn sub_assign(&mut self, other: T) {
+        *self = *self - other;
+    }
+}
+
+forward_ref_op_assign! {
+    [T]
+    impl SubAssign, sub_assign for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedSub,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
+impl<T> Mul<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -333,22 +493,22 @@ where
     T: Rem<T, Output = T>,
     T: One,
 {
-    type Output = RangedWrapping<T>;
+    type Output = Self;
 
     #[inline]
-    fn mul(self, other: RangedWrapping<T>) -> RangedWrapping<T> {
+    fn mul(self, other: Self) -> Self {
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        if let Some(value) = self.value.checked_mul(&other.value) {
-            RangedWrapping {
-                value: wrap(value, self.max, self.min),
+        if let Some(checked_value) = self.value.checked_mul(&other.value) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
                 max: self.max,
                 min: self.min,
             }
             // self.value * other.value is greater than T::MAX, so wrap around to T:MIN value
         } else {
-            RangedWrapping {
+            Self {
                 value: wrap(T::min_value(), self.max, self.min),
                 max: self.max,
                 min: self.min,
@@ -359,7 +519,7 @@ where
 
 forward_ref_binop! {
     [T]
-    impl Mul, mul for RangedWrapping<T>
+    impl Mul, mul for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -371,9 +531,59 @@ forward_ref_binop! {
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     T: One,
-
 }
-impl<T> MulAssign for RangedWrapping<T>
+
+impl<T> Mul<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedMul,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, other: T) -> Self {
+        if let Some(checked_value) = self.value.checked_mul(&other) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value * other is greater than T::MAX, so wrap around to T:MIN value
+        } else {
+            Self {
+                value: wrap(T::min_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+        }
+    }
+}
+
+forward_ref_binop! {
+    [T]
+    impl Mul, mul for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedMul,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
+impl<T> MulAssign<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -391,18 +601,13 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self
-            * RangedWrapping {
-                value: other.value,
-                max: self.max,
-                min: self.min,
-            };
+        *self = *self * other;
     }
 }
 
 forward_ref_op_assign! {
     [T]
-    impl MulAssign, mul_assign for RangedWrapping<T>
+    impl MulAssign, mul_assign for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -416,7 +621,42 @@ forward_ref_op_assign! {
     T: One,
 }
 
-impl<T> Div for RangedWrapping<T>
+impl<T> MulAssign<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedMul,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    #[inline]
+    fn mul_assign(&mut self, other: T) {
+        *self = *self * other;
+    }
+}
+
+forward_ref_op_assign! {
+    [T]
+    impl MulAssign, mul_assign for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedMul,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
+impl<T> Div<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -429,22 +669,22 @@ where
     T: Rem<T, Output = T>,
     T: One,
 {
-    type Output = RangedWrapping<T>;
+    type Output = Self;
 
     #[inline]
-    fn div(self, other: RangedWrapping<T>) -> RangedWrapping<T> {
+    fn div(self, other: Self) -> Self {
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        if let Some(value) = self.value.checked_div(&other.value) {
-            RangedWrapping {
-                value: wrap(value, self.max, self.min),
+        if let Some(checked_value) = self.value.checked_div(&other.value) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
                 max: self.max,
                 min: self.min,
             }
             // self.value / other.value is less than T::MIN, so wrap around to T:MAX value
         } else {
-            RangedWrapping {
+            Self {
                 value: wrap(T::max_value(), self.max, self.min),
                 max: self.max,
                 min: self.min,
@@ -455,7 +695,7 @@ where
 
 forward_ref_binop! {
     [T]
-    impl Div, div for RangedWrapping<T>
+    impl Div, div for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -467,9 +707,59 @@ forward_ref_binop! {
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     T: One,
-
 }
-impl<T> DivAssign for RangedWrapping<T>
+
+impl<T> Div<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedDiv,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    type Output = Self;
+
+    #[inline]
+    fn div(self, other: T) -> Self {
+        if let Some(checked_value) = self.value.checked_div(&other) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value / other is less than T::MIN, so wrap around to T:MAX value
+        } else {
+            Self {
+                value: wrap(T::max_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+        }
+    }
+}
+
+forward_ref_binop! {
+    [T]
+    impl Div, div for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedDiv,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
+impl<T> DivAssign<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -487,18 +777,13 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self
-            / RangedWrapping {
-                value: other.value,
-                max: self.max,
-                min: self.min,
-            };
+        *self = *self / other;
     }
 }
 
 forward_ref_op_assign! {
     [T]
-    impl DivAssign, div_assign for RangedWrapping<T>
+    impl DivAssign, div_assign for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -511,7 +796,43 @@ forward_ref_op_assign! {
     T: Rem<T, Output = T>,
     T: One,
 }
-impl<T> Rem for RangedWrapping<T>
+
+impl<T> DivAssign<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedDiv,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    #[inline]
+    fn div_assign(&mut self, other: T) {
+        *self = *self / other;
+    }
+}
+
+forward_ref_op_assign! {
+    [T]
+    impl DivAssign, div_assign for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedDiv,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
+impl<T> Rem<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -524,22 +845,22 @@ where
     T: Rem<T, Output = T>,
     T: One,
 {
-    type Output = RangedWrapping<T>;
+    type Output = Self;
 
     #[inline]
-    fn rem(self, other: RangedWrapping<T>) -> RangedWrapping<T> {
+    fn rem(self, other: Self) -> Self {
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        if let Some(value) = self.value.checked_rem(&other.value) {
-            RangedWrapping {
-                value: wrap(value, self.max, self.min),
+        if let Some(checked_value) = self.value.checked_rem(&other.value) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
                 max: self.max,
                 min: self.min,
             }
             // self.value % other.value is less than T::MIN, so wrap around to T:MAX value
         } else {
-            RangedWrapping {
+            Self {
                 value: wrap(T::max_value(), self.max, self.min),
                 max: self.max,
                 min: self.min,
@@ -550,7 +871,7 @@ where
 
 forward_ref_binop! {
     [T]
-    impl Rem, rem for RangedWrapping<T>
+    impl Rem, rem for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -562,9 +883,59 @@ forward_ref_binop! {
     T: Div<T, Output = T>,
     T: Rem<T, Output = T>,
     T: One,
-
 }
-impl<T> RemAssign for RangedWrapping<T>
+
+impl<T> Rem<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedRem,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    type Output = Self;
+
+    #[inline]
+    fn rem(self, other: T) -> Self {
+        if let Some(checked_value) = self.value.checked_rem(&other) {
+            Self {
+                value: wrap(checked_value, self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+            // self.value % other is less than T::MIN, so wrap around to T:MAX value
+        } else {
+            Self {
+                value: wrap(T::max_value(), self.max, self.min),
+                max: self.max,
+                min: self.min,
+            }
+        }
+    }
+}
+
+forward_ref_binop! {
+    [T]
+    impl Rem, rem for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedRem,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
+impl<T> RemAssign<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -582,18 +953,13 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self
-            % RangedWrapping {
-                value: other.value,
-                max: self.max,
-                min: self.min,
-            };
+        *self = *self % other;
     }
 }
 
 forward_ref_op_assign! {
     [T]
-    impl RemAssign, rem_assign for RangedWrapping<T>
+    impl RemAssign, rem_assign for RangedWrapping<T>, RangedWrapping<T>
     where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -606,6 +972,42 @@ forward_ref_op_assign! {
     T: Rem<T, Output = T>,
     T: One,
 }
+
+impl<T> RemAssign<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedRem,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+{
+    #[inline]
+    fn rem_assign(&mut self, other: T) {
+        *self = *self % other;
+    }
+}
+
+forward_ref_op_assign! {
+    [T]
+    impl RemAssign, rem_assign for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: CheckedRem,
+    T: Bounded,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: One,
+}
+
 impl<T> Not for RangedWrapping<T>
 where
     T: PartialOrd<T>,
@@ -617,7 +1019,7 @@ where
     T: Rem<T, Output = T>,
     T: Not<Output = T>,
 {
-    type Output = RangedWrapping<T>;
+    type Output = Self;
 
     #[inline]
     fn not(self) -> RangedWrapping<T> {
@@ -629,7 +1031,21 @@ where
     }
 }
 
-impl<T> BitXor for RangedWrapping<T>
+forward_ref_unop! {
+    [T]
+    impl Not, not for RangedWrapping<T>
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: Not<Output = T>,
+}
+
+impl<T> BitXor<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -641,14 +1057,14 @@ where
     T: BitXor<T, Output = T>,
     T: One,
 {
-    type Output = RangedWrapping<T>;
+    type Output = Self;
 
     #[inline]
-    fn bitxor(self, other: RangedWrapping<T>) -> RangedWrapping<T> {
+    fn bitxor(self, other: Self) -> Self {
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping {
+        Self {
             value: wrap(self.value ^ other.value, self.max, self.min),
             max: self.max,
             min: self.min,
@@ -656,7 +1072,61 @@ where
     }
 }
 
-impl<T> BitXorAssign for RangedWrapping<T>
+forward_ref_binop! {
+    [T]
+    impl BitXor, bitxor for RangedWrapping<T>, RangedWrapping<T>
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitXor<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitXor<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitXor<T, Output = T>,
+    T: One,
+{
+    type Output = Self;
+
+    #[inline]
+    fn bitxor(self, other: T) -> Self {
+        Self {
+            value: wrap(self.value ^ other, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
+    }
+}
+
+forward_ref_binop! {
+    [T]
+    impl BitXor, bitxor for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitXor<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitXorAssign<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -673,16 +1143,59 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self
-            ^ RangedWrapping {
-                value: other.value,
-                max: self.max,
-                min: self.min,
-            };
+        *self = *self ^ other;
     }
 }
 
-impl<T> BitOr for RangedWrapping<T>
+forward_ref_op_assign! {
+    [T]
+    impl BitXorAssign, bitxor_assign for RangedWrapping<T>, RangedWrapping<T>
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitXor<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitXorAssign<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitXor<T, Output = T>,
+    T: One,
+{
+    #[inline]
+    fn bitxor_assign(&mut self, other: T) {
+        *self = *self ^ other;
+    }
+}
+
+forward_ref_op_assign! {
+    [T]
+    impl BitXorAssign, bitxor_assign for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitXor<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitOr<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -694,14 +1207,14 @@ where
     T: BitOr<T, Output = T>,
     T: One,
 {
-    type Output = RangedWrapping<T>;
+    type Output = Self;
 
     #[inline]
-    fn bitor(self, other: RangedWrapping<T>) -> RangedWrapping<T> {
+    fn bitor(self, other: Self) -> Self {
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping {
+        Self {
             value: wrap(self.value | other.value, self.max, self.min),
             max: self.max,
             min: self.min,
@@ -709,7 +1222,61 @@ where
     }
 }
 
-impl<T> BitOrAssign for RangedWrapping<T>
+forward_ref_binop! {
+    [T]
+    impl BitOr, bitor for RangedWrapping<T>, RangedWrapping<T>
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitOr<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitOr<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitOr<T, Output = T>,
+    T: One,
+{
+    type Output = Self;
+
+    #[inline]
+    fn bitor(self, other: T) -> Self {
+        Self {
+            value: wrap(self.value | other, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
+    }
+}
+
+forward_ref_binop! {
+    [T]
+    impl BitOr, bitor for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitOr<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitOrAssign<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -726,16 +1293,59 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self
-            | RangedWrapping {
-                value: other.value,
-                max: self.max,
-                min: self.min,
-            };
+        *self = *self | other;
     }
 }
 
-impl<T> BitAnd for RangedWrapping<T>
+forward_ref_op_assign! {
+    [T]
+    impl BitOrAssign, bitor_assign for RangedWrapping<T>, RangedWrapping<T>
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitOr<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitOrAssign<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitOr<T, Output = T>,
+    T: One,
+{
+    #[inline]
+    fn bitor_assign(&mut self, other: T) {
+        *self = *self | other;
+    }
+}
+
+forward_ref_op_assign! {
+    [T]
+    impl BitOrAssign, bitor_assign for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitOr<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitAnd<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -747,14 +1357,14 @@ where
     T: BitAnd<T, Output = T>,
     T: One,
 {
-    type Output = RangedWrapping<T>;
+    type Output = Self;
 
     #[inline]
-    fn bitand(self, other: RangedWrapping<T>) -> RangedWrapping<T> {
+    fn bitand(self, other: Self) -> Self {
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        RangedWrapping {
+        Self {
             value: wrap(self.value & other.value, self.max, self.min),
             max: self.max,
             min: self.min,
@@ -762,7 +1372,61 @@ where
     }
 }
 
-impl<T> BitAndAssign for RangedWrapping<T>
+forward_ref_binop! {
+    [T]
+    impl BitAnd, bitand for RangedWrapping<T>, RangedWrapping<T>
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitAnd<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitAnd<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitAnd<T, Output = T>,
+    T: One,
+{
+    type Output = Self;
+
+    #[inline]
+    fn bitand(self, other: T) -> Self {
+        Self {
+            value: wrap(self.value & other, self.max, self.min),
+            max: self.max,
+            min: self.min,
+        }
+    }
+}
+
+forward_ref_binop! {
+    [T]
+    impl BitAnd, bitand for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitAnd<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitAndAssign<Self> for RangedWrapping<T>
 where
     T: PartialOrd<T>,
     T: std::marker::Copy,
@@ -780,13 +1444,57 @@ where
         if self.max != other.max || self.min != other.min {
             panic!("self and other values of RangedWrapping do not have the same bounds")
         }
-        *self = *self
-            & RangedWrapping {
-                value: other.value,
-                max: self.max,
-                min: self.min,
-            };
+        *self = *self & other;
     }
+}
+
+forward_ref_op_assign! {
+    [T]
+    impl BitAndAssign, bitand_assign for RangedWrapping<T>, RangedWrapping<T>
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitAnd<T, Output = T>,
+    T: One,
+}
+
+impl<T> BitAndAssign<T> for RangedWrapping<T>
+where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitAnd<T, Output = T>,
+    T: One,
+{
+    #[inline]
+    //TODO: need to make sure this actually wraps properly
+    fn bitand_assign(&mut self, other: T) {
+        *self = *self & other;
+    }
+}
+
+forward_ref_op_assign! {
+    [T]
+    impl BitAndAssign, bitand_assign for RangedWrapping<T>, T
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: BitAnd<T, Output = T>,
+    T: One,
 }
 
 impl<T> Neg for RangedWrapping<T>
@@ -802,18 +1510,31 @@ where
 {
     type Output = Self;
     #[inline]
-    //TODO: panic if negation would be less than lower bound
     fn neg(self) -> Self {
         let temp = T::zero() - self.value;
         if temp < self.min {
             panic!("negative value is out of wrapped bounds");
         }
-        RangedWrapping {
+        Self {
             value: temp,
             max: self.max,
             min: self.min,
         }
     }
+}
+
+forward_ref_unop! {
+    [T]
+    impl Neg, neg for RangedWrapping<T>
+    where
+    T: PartialOrd<T>,
+    T: std::marker::Copy,
+    T: Sub<T, Output = T>,
+    T: Add<T, Output = T>,
+    T: Mul<T, Output = T>,
+    T: Div<T, Output = T>,
+    T: Rem<T, Output = T>,
+    T: Zero,
 }
 
 //TODO: fix
@@ -840,16 +1561,16 @@ impl<T> RangedWrapping<T> {
     //            /// #![feature(wrapping_int_impl)]
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert_eq!(RangedWrapping(100", stringify!(T), ").abs(), RangedWrapping(100));")]
-    //            #[doc = concat!("assert_eq!(RangedWrapping(-100", stringify!(T), ").abs(), RangedWrapping(100));")]
-    //            #[doc = concat!("assert_eq!(RangedWrapping(", stringify!(T), "::MIN).abs(), RangedWrapping(", stringify!(T), "::MIN));")]
-    //            /// assert_eq!(RangedWrapping(-128i8).abs().0 as u8, 128u8);
+    //            #[doc = concat!("assert_eq!(RangedWrapping{100", stringify!(T), ").abs(), RangedWrapping(100));"}]
+    //            #[doc = concat!("assert_eq!(RangedWrapping{-100", stringify!(T), ").abs(), RangedWrapping(100));"}]
+    //            #[doc = concat!("assert_eq!(RangedWrapping{", stringify!(T), "::MIN).abs(), RangedWrapping(", stringify!(T), "::MIN));"}]
+    //            /// assert_eq!(RangedWrapping{-128i8).abs().0 as u8, 128u8};
     //            /// ```
     //            #[inline]
     //            #[must_use = "this returns the result of the operation, \
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-    //            pub fn abs(self) -> RangedWrapping<T, U> {
+    //            pub fn abs(self) -> RangedWrapping<T> {
     //                RangedWrapping{self.value.wrapping_abs()}
     //            }
     //
@@ -867,15 +1588,15 @@ impl<T> RangedWrapping<T> {
     //            /// #![feature(wrapping_int_impl)]
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert_eq!(RangedWrapping(10", stringify!(T), ").signum(), RangedWrapping(1));")]
-    //            #[doc = concat!("assert_eq!(RangedWrapping(0", stringify!(T), ").signum(), RangedWrapping(0));")]
-    //            #[doc = concat!("assert_eq!(RangedWrapping(-10", stringify!(T), ").signum(), RangedWrapping(-1));")]
+    //            #[doc = concat!("assert_eq!(RangedWrapping{10", stringify!(T), ").signum(), RangedWrapping(1));"}]
+    //            #[doc = concat!("assert_eq!(RangedWrapping{0", stringify!(T), ").signum(), RangedWrapping(0));"}]
+    //            #[doc = concat!("assert_eq!(RangedWrapping{-10", stringify!(T), ").signum(), RangedWrapping(-1));"}]
     //            /// ```
     //            #[inline]
     //            #[must_use = "this returns the result of the operation, \
     //                          without modifying the original"]
     //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-    //            pub fn signum(self) -> RangedWrapping<T, U> {
+    //            pub fn signum(self) -> RangedWrapping<T> {
     //                RangedWrapping{self.value.signum()}
     //            }
     //
@@ -890,8 +1611,8 @@ impl<T> RangedWrapping<T> {
     //            /// #![feature(wrapping_int_impl)]
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert!(RangedWrapping(10", stringify!(T), ").is_positive());")]
-    //            #[doc = concat!("assert!(!RangedWrapping(-10", stringify!(T), ").is_positive());")]
+    //            #[doc = concat!("assert!(RangedWrapping{10", stringify!(T), ").is_positive());"}]
+    //            #[doc = concat!("assert!(!RangedWrapping{-10", stringify!(T), ").is_positive());"}]
     //            /// ```
     //            #[must_use]
     //            #[inline]
@@ -911,8 +1632,8 @@ impl<T> RangedWrapping<T> {
     //            /// #![feature(wrapping_int_impl)]
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert!(RangedWrapping(-10", stringify!(T), ").is_negative());")]
-    //            #[doc = concat!("assert!(!RangedWrapping(10", stringify!(T), ").is_negative());")]
+    //            #[doc = concat!("assert!(RangedWrapping{-10", stringify!(T), ").is_negative());"}]
+    //            #[doc = concat!("assert!(!RangedWrapping{10", stringify!(T), ").is_negative());"}]
     //            /// ```
     //            #[must_use]
     //            #[inline]
@@ -937,8 +1658,8 @@ impl<T> RangedWrapping<T> {
     //            /// #![feature(wrapping_int_impl)]
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// let n: RangedWrapping<i64> = RangedWrapping(0x0123456789ABCDEF);
-    //            /// let m: RangedWrapping<i64> = RangedWrapping(-0x76543210FEDCBA99);
+    //            /// let n: RangedWrapping<i64> = RangedWrapping{0x0123456789ABCDEF};
+    //            /// let m: RangedWrapping<i64> = RangedWrapping{-0x76543210FEDCBA99};
     //            ///
     //            /// assert_eq!(n.rotate_left(32), m);
     //            /// ```
@@ -965,8 +1686,8 @@ impl<T> RangedWrapping<T> {
     //            /// #![feature(wrapping_int_impl)]
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// let n: RangedWrapping<i64> = RangedWrapping(0x0123456789ABCDEF);
-    //            /// let m: RangedWrapping<i64> = RangedWrapping(-0xFEDCBA987654322);
+    //            /// let n: RangedWrapping<i64> = RangedWrapping{0x0123456789ABCDEF};
+    //            /// let m: RangedWrapping<i64> = RangedWrapping{-0xFEDCBA987654322};
     //            ///
     //            /// assert_eq!(n.rotate_right(4), m);
     //            /// ```
@@ -988,13 +1709,13 @@ impl<T> RangedWrapping<T> {
     //            /// #![feature(wrapping_int_impl)]
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// let n: RangedWrapping<i16> = RangedWrapping(0b0000000_01010101);
-    //            /// assert_eq!(n, RangedWrapping(85));
+    //            /// let n: RangedWrapping<i16> = RangedWrapping{0b0000000_01010101};
+    //            /// assert_eq!(n, RangedWrapping{85)};
     //            ///
     //            /// let m = n.swap_bytes();
     //            ///
-    //            /// assert_eq!(m, RangedWrapping(0b01010101_00000000));
-    //            /// assert_eq!(m, RangedWrapping(21760));
+    //            /// assert_eq!(m, RangedWrapping{0b01010101_00000000)};
+    //            /// assert_eq!(m, RangedWrapping{21760)};
     //            /// ```
     //            #[inline]
     //            #[must_use = "this returns the result of the operation, \
@@ -1016,13 +1737,13 @@ impl<T> RangedWrapping<T> {
     //            /// ```
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            /// let n = RangedWrapping(0b0000000_01010101i16);
-    //            /// assert_eq!(n, RangedWrapping(85));
+    //            /// let n = RangedWrapping{0b0000000_01010101i16};
+    //            /// assert_eq!(n, RangedWrapping{85)};
     //            ///
     //            /// let m = n.reverse_bits();
     //            ///
     //            /// assert_eq!(m.0 as u16, 0b10101010_00000000);
-    //            /// assert_eq!(m, RangedWrapping(-22016));
+    //            /// assert_eq!(m, RangedWrapping{-22016)};
     //            /// ```
     //            #[stable(feature = "reverse_bits", since = "1.37.0")]
     //            #[rustc_const_stable(feature = "const_reverse_bits", since = "1.37.0")]
@@ -1043,7 +1764,7 @@ impl<T> RangedWrapping<T> {
     //            /// #![feature(wrapping_int_impl)]
     //            /// use std::num::RangedWrapping;
     //            ///
-    //            #[doc = concat!("assert_eq!(RangedWrapping(3", stringify!(T), ").pow(4), RangedWrapping(81));")]
+    //            #[doc = concat!("assert_eq!(RangedWrapping{3", stringify!(T), ").pow(4), RangedWrapping(81));"}]
     //            /// ```
     //            ///
     //            /// Results that are too large are wrapped:
@@ -1074,6 +1795,151 @@ where
 }
 
 //TODO: complete tests
+//
+// # List of functions to test
+//
+//  -wrap
+//      - usize
+//      - f32
+//      - f64
+//
+//  - Add RangedWrapping and RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - Add RangedWrapping and
+//      - usize
+//      - f32
+//      - f64
+//  - AddAssign RangedWrapping to RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - AddAssign RangedWrapping to
+//      - usize
+//      - f32
+//      - f64
+//  - Sub RangedWrapping and RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - Sub RangedWrapping and
+//      - usize
+//      - f32
+//      - f64
+//  - SubAssign RangedWrapping to RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - SubAssign RangedWrapping to
+//      - usize
+//      - f32
+//      - f64
+//  - Mul RangedWrapping and RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - Mul RangedWrapping and
+//      - usize
+//      - f32
+//      - f64
+//  - MulAssign RangedWrapping to RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - MulAssign RangedWrapping to
+//      - usize
+//      - f32
+//      - f64
+//  - Div RangedWrapping and RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - Div RangedWrapping and
+//      - usize
+//      - f32
+//      - f64
+//  - DivAssign RangedWrapping to RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - DivAssign RangedWrapping to
+//      - usize
+//      - f32
+//      - f64
+//  - Rem RangedWrapping and RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - Rem RangedWrapping and
+//      - usize
+//      - f32
+//      - f64
+//  - RemAssign RangedWrapping to RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - RemAssign RangedWrapping to
+//      - usize
+//      - f32
+//      - f64
+//  - Not RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - BitXor RangedWrapping and RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - BitXor RangedWrapping and
+//      - usize
+//      - f32
+//      - f64
+//  - BitXorAssign RangedWrapping to RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - BitXorAssign RangedWrapping to
+//      - usize
+//      - f32
+//      - f64
+//  - BitOr RangedWrapping and RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - BitOr RangedWrapping and
+//      - usize
+//      - f32
+//      - f64
+//  - BitOrAssign RangedWrapping to RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - BitOrAssign RangedWrapping to
+//      - usize
+//      - f32
+//      - f64
+//  - BitAnd RangedWrapping and RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - BitAnd RangedWrapping and
+//      - usize
+//      - f32
+//      - f64
+//  - BitAndAssign RangedWrapping to RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//  - BitAndAssign RangedWrapping to
+//      - usize
+//      - f32
+//      - f64
+//  - Neg RangedWrapping
+//      - usize
+//      - f32
+//      - f64
+//
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1152,6 +2018,6 @@ mod tests {
 
         let test2 = test1 + 2;
 
-        assert_eq!(test1.value, 7);
+        assert_eq!(test2.value, 7);
     }
 }
