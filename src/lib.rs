@@ -14,6 +14,7 @@ use num_traits::{
     bounds::Bounded,
     identities::{One, Zero},
     ops::checked::{CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedShl, CheckedShr, CheckedSub},
+    Signed,
 };
 
 //TODO: use num_traits to implement math against primative types
@@ -62,7 +63,6 @@ use num_traits::{
 /// Any math operation on two instances of `RangedWrapping` will panic where the max or min values
 /// are not equal.
 
-//TODO: experiement with const max/min
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, Hash)]
 pub struct RangedWrapping<T> {
     pub value: T,
@@ -126,8 +126,6 @@ impl<T: fmt::UpperHex> fmt::UpperHex for RangedWrapping<T> {
         self.value.fmt(f)
     }
 }
-
-//TODO: impl num_traits::bounded
 
 impl<T> Add<RangedWrapping<T>> for RangedWrapping<T>
 where
@@ -1574,52 +1572,52 @@ impl<T> RangedWrapping<T> {
     //                RangedWrapping{self.value.wrapping_abs()}
     //            }
     //
-    //            /// Returns a number representing sign of `self`.
-    //            ///
-    //            ///  - `0` if the number is zero
-    //            ///  - `1` if the number is positive
-    //            ///  - `-1` if the number is negative
-    //            ///
-    //            /// # Examples
-    //            ///
-    //            /// Basic usage:
-    //            ///
-    //            /// ```
-    //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::RangedWrapping;
-    //            ///
-    //            #[doc = concat!("assert_eq!(RangedWrapping{10", stringify!(T), ").signum(), RangedWrapping(1));"}]
-    //            #[doc = concat!("assert_eq!(RangedWrapping{0", stringify!(T), ").signum(), RangedWrapping(0));"}]
-    //            #[doc = concat!("assert_eq!(RangedWrapping{-10", stringify!(T), ").signum(), RangedWrapping(-1));"}]
-    //            /// ```
-    //            #[inline]
-    //            #[must_use = "this returns the result of the operation, \
-    //                          without modifying the original"]
-    //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-    //            pub fn signum(self) -> RangedWrapping<T> {
-    //                RangedWrapping{self.value.signum()}
-    //            }
-    //
-    //            /// Returns `true` if `self` is positive and `false` if the number is zero or
-    //            /// negative.
-    //            ///
-    //            /// # Examples
-    //            ///
-    //            /// Basic usage:
-    //            ///
-    //            /// ```
-    //            /// #![feature(wrapping_int_impl)]
-    //            /// use std::num::RangedWrapping;
-    //            ///
-    //            #[doc = concat!("assert!(RangedWrapping{10", stringify!(T), ").is_positive());"}]
-    //            #[doc = concat!("assert!(!RangedWrapping{-10", stringify!(T), ").is_positive());"}]
-    //            /// ```
-    //            #[must_use]
-    //            #[inline]
-    //            #[unstable(feature = "wrapping_int_impl", issue = "32463")]
-    //            pub const fn is_positive(self) -> bool {
-    //                self.value.is_positive()
-    //            }
+    /// Returns a number representing sign of `self`.
+    ///
+    ///  - `0` if the number is zero
+    ///  - `1` if the number is positive
+    ///  - `-1` if the number is negative
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use ranged_wrapping::RangedWrapping;
+    ///assert_eq!(RangedWrapping{value: 10, max: 30, min: -30}.signum(), 1);
+    ///assert_eq!(RangedWrapping{value: 0, max: 30, min: -30}.signum(), 0);
+    ///assert_eq!(RangedWrapping{value: -10, max: 30, min: -30}.signum(), -1);
+    /// ```
+    #[inline]
+    #[must_use = "this returns the result of the operation, \
+                              without modifying the original"]
+    pub fn signum(self) -> T
+    where
+        T: Signed,
+    {
+        self.value.signum()
+    }
+
+    // /// Returns `true` if `self` is positive and `false` if the number is zero or
+    // /// negative.
+    // ///
+    // /// # Examples
+    // ///
+    // /// Basic usage:
+    // ///
+    // /// ```
+    // ///
+    // ///assert!(RangedWrapping{value: 10, max: 15, min: -15}.is_positive());
+    // ///assert!(!RangedWrapping{-10, max: 15, min: -15}.is_positive());
+    // /// ```
+    // #[must_use]
+    // #[inline]
+    // pub const fn is_positive(self) -> bool
+    // where
+    //     T: Signed,
+    // {
+    //     self.value.is_positive()
+    // }
     //
     //            /// Returns `true` if `self` is negative and `false` if the number is zero or
     //            /// positive.
@@ -1945,7 +1943,7 @@ mod tests {
     use super::*;
 
     struct TestStruct {
-        id: u64,
+        _id: u64,
         content: RangedWrapping<usize>,
     }
 
@@ -1993,7 +1991,7 @@ mod tests {
     #[test]
     fn test_addassign_struct() {
         let mut test1 = TestStruct {
-            id: 0,
+            _id: 0,
             content: RangedWrapping {
                 value: 5,
                 max: 10,
