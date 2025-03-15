@@ -6,6 +6,7 @@ license = "MIT OR Apache-2.0"
 authors = ["Stephen Walker-Weinshenker"]
 description = "A generic wrapping type that allows wrapping to a specified max and minimum value"
 categories = ["data-structures", "mathematics"]
+rust-version = "1.81.0"
 
 
 [dependencies]
