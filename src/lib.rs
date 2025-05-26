@@ -28,11 +28,11 @@ use num_traits::{
 /// The maximum and minimum values are both inclusive.
 ///
 /// All standard stable math operations defined on [`std::num::Wrapping<T>`] are also defined on
-/// `RangedWrapping<T>.
+/// `RangedWrapping<T>`.
 ///
 /// The underlying value can be retrieved through `.value`.
 ///
-/// Note: Two RangedWrapping instance with different max or min values are considered
+/// Note: Two `RangedWrapping` instance with different max or min values are considered
 /// different types and prevented from being mathed together. Unfortunately Rust doesn't have
 /// dependant or refinement types (which would technically eliminate the need for this entire
 /// library) so this must be done at run time with panics.
